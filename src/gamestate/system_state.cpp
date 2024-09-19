@@ -2,6 +2,9 @@
 #include <functional>
 #include <thread>
 #include "system_state.hpp"
+
+#include <academy.hpp>
+
 #include "dcon_generated.hpp"
 #include "map_modes.hpp"
 #include "opengl_wrapper.hpp"
@@ -3230,6 +3233,8 @@ void state::load_scenario_data(parsers::error_handler& err, sys::year_month_day 
 	military::recover_org(*this);
 
 	military::set_initial_leaders(*this);
+
+	academy::fill_academia(*this);
 }
 
 void state::preload() {
@@ -4154,6 +4159,7 @@ void state::single_game_tick() {
 			break;
 		case 10:
 			province::update_crimes(*this);
+			academy::update_academia(*this);
 			break;
 		case 11:
 			province::update_nationalism(*this);

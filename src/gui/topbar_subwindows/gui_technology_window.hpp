@@ -3,6 +3,7 @@
 #include "gui_common_elements.hpp"
 #include "gui_element_types.hpp"
 #include "triggers.hpp"
+#include "gui_academia_window.hpp"
 
 namespace ui {
 
@@ -902,7 +903,13 @@ public:
 			return ptr;
 		} else if(name == "inventions") {
 			return make_element_by_type<technology_possible_invention_listbox>(state, id);
-		} else {
+		}
+		else if(name == "alice_academia_window") {
+			auto ptr = make_element_by_type<academia_window_button>(state, id);
+			ptr->set_button_text(state, "Academia");
+			return ptr;
+		}
+		else {
 			return nullptr;
 		}
 	}

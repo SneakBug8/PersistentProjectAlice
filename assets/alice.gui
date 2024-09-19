@@ -4525,6 +4525,12 @@ guiTypes = {
 		position = { x= 180 y = 3 }
 		quadTextureSprite = "GFX_move_capital"	
 	}
+	guiButtonType = {
+        name = "alice_academia_window"
+        extends = "country_technology"
+        position = { x = 360 y = 30 }
+        quadTextureSprite = "GFX_tech_folder_army"
+    }
     
     windowType = {
 		name = "alice_build_up_to_template_window"

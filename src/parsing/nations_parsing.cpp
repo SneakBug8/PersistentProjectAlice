@@ -500,6 +500,28 @@ void m_war_exhaustion(token_generator& gen, error_handler& err, scenario_buildin
 	context.state.national_definitions.war_exhaustion = new_modifier;
 }
 
+void m_academia_modifier(token_generator& gen, error_handler& err, scenario_building_context& context, int32_t position, int32_t level) {
+	auto name_id = text::find_or_add_key(context.state, "academia_modifier_" + std::to_string(position) + "_" + std::to_string(level), true);
+
+	auto parsed_modifier = parse_modifier_base(gen, err, context);
+
+	auto new_modifier = context.state.world.create_modifier();
+
+	context.state.world.modifier_set_icon(new_modifier, uint8_t(parsed_modifier.icon_index));
+	context.state.world.modifier_set_name(new_modifier, name_id);
+	context.state.world.modifier_set_national_values(new_modifier, parsed_modifier.force_national_mod());
+
+	context.map_of_modifiers.insert_or_assign(std::string("academia_modifier_" + std::to_string(position) + "_" + std::to_string(level)), new_modifier);
+	if(context.state.national_definitions.academia_modifiers.max_size() < 8) {
+		context.state.national_definitions.academia_modifiers.resize(8);
+		// std:fill(context.state.national_definitions.academia_modifiers.begin(),
+		//context.state.national_definitions.academia_modifiers.end(),
+		//std::vector<dcon::modifier_id>(6));
+	}
+
+	context.state.national_definitions.academia_modifiers[position][level] = new_modifier;
+}
+
 void m_badboy(token_generator& gen, error_handler& err, scenario_building_context& context) {
 	auto name_id = text::find_or_add_key(context.state, "badboy", true);
 

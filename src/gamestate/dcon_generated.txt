@@ -5132,6 +5132,50 @@ object {
 	}
 }
 
+object {
+	name{ academia }
+	storage_type{ contiguous }
+	size{ 17000 }
+	tag{ save }
+	tag{ scenario }
+	
+	property{
+		name{ skills }
+		type{ array{int32_t}{int32_t} }
+		tag{ save }
+	}
+	property{
+		name{ first_names }
+		type{ array{int32_t}{unit_name_id} }
+		tag{ save }
+	}
+	property{
+		name{ last_names }
+		type{ array{int32_t}{unit_name_id} }
+		tag{ save }
+	}
+	property{
+		name{ modifiers }
+		type{  array{int32_t}{modifier_id} }
+		tag{ save }
+	}
+}
+relationship{
+	name{ academia_loyalty }
+	tag{ save }
+
+	link{
+		object{nation}
+		name{nation}
+		type{unique}
+	}
+	link{
+		object{academia}
+		name{academia}
+		type{unique}
+	}
+}
+
 load_save{
 	name{store_scenario}
 	only_objects{scenario}
