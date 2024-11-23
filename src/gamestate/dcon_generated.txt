@@ -4379,6 +4379,16 @@ object {
 		type{ bitfield }
 		tag{ save }
 	}
+	property{
+		name{ principal_debt }
+		type{ float }
+		tag{ save }
+	}
+	property{
+		name{ outstanding_debt }
+		type{ float }
+		tag{ save }
+	}
 }
 
 relationship{
@@ -4594,6 +4604,11 @@ relationship{
 	property{
 		name{ is_upgrade }
 		type{ bitfield }
+		tag{ save }
+	}
+	property{
+		name{ outstanding_debt }
+		type{ float }
 		tag{ save }
 	}
 }

@@ -649,13 +649,17 @@ bool can_take_loans(sys::state& state, dcon::nation_id n) {
 	return true;
 }
 
-float interest_payment(sys::state& state, dcon::nation_id n) {
+float interest_rate(sys::state& state, dcon::nation_id n) {
 	/*
 	Every day, a nation must pay its creditors. It must pay national-modifier-to-loan-interest x debt-amount x interest-to-debt-holder-rate / 30
 	When a nation takes a loan, the interest-to-debt-holder-rate is set at nation-taking-the-loan-technology-loan-interest-modifier + define:LOAN_BASE_INTEREST, with a minimum of 0.01.
 	*/
+	return std::max(0.01f, (state.world.nation_get_modifier_values(n, sys::national_mod_offsets::loan_interest) + 1.0f) * state.defines.loan_base_interest) / 30.0f;
+}
+float interest_payment(sys::state& state, dcon::nation_id n) {
+	
 	auto debt = state.world.nation_get_local_loan(n);
-	return debt * std::max(0.01f, (state.world.nation_get_modifier_values(n, sys::national_mod_offsets::loan_interest) + 1.0f) * state.defines.loan_base_interest) / 30.0f;
+	return debt * interest_rate(state, n);
 }
 float max_loan(sys::state& state, dcon::nation_id n) {
 	/*
@@ -664,6 +668,68 @@ float max_loan(sys::state& state, dcon::nation_id n) {
 	auto mod = (state.world.nation_get_modifier_values(n, sys::national_mod_offsets::max_loan_modifier) + 1.0f);
 	auto total_tax_base = state.world.nation_get_total_rich_income(n) + state.world.nation_get_total_middle_income(n) + state.world.nation_get_total_poor_income(n);
 	return std::max(0.0f, (total_tax_base + state.world.nation_get_national_bank(n)) * mod);
+}
+float national_bank_free_capital(sys::state& state, dcon::nation_id n) {
+	auto tnb = state.world.nation_get_national_bank(n);
+	auto debt = state.world.nation_get_local_loan(n);
+
+	return tnb - debt;
+}
+
+// Calculate expected profits of current private investment projects and take loans to continue construction
+float private_borrowing_take_loan(sys::state& state, dcon::nation_id n, float target_loan) {
+	auto available_loans = national_bank_free_capital(state, n);
+
+	if(available_loans <= 1.0f) {
+		return 0.0f;
+	}
+
+	if(available_loans < target_loan) {
+		target_loan = available_loans;
+	}
+
+	auto total_expected_profit = 0.0f;
+
+	for(auto c : state.world.nation_get_state_building_construction(n)) {
+		auto type = state.world.state_building_construction_get_type(c);
+
+		auto market = c.get_state().get_market_from_local_market();
+		if(c.get_is_pop_project()) {
+			float cost = economy::factory_type_build_cost(state, n, market, type);
+
+			// Don't let factory take too much debt
+			if(c.get_outstanding_debt() > cost * 0.3f) {
+				continue;
+			}
+			float output = economy::factory_type_output_cost(state, n, market, type);
+			float input = economy::factory_type_input_cost(state, n, market, type);
+
+			auto profit = (output - input) / cost;
+			total_expected_profit += profit;
+		}
+	}
+
+	for(auto c : state.world.nation_get_state_building_construction(n)) {
+		auto type = state.world.state_building_construction_get_type(c);
+
+		auto market = c.get_state().get_market_from_local_market();
+		if(c.get_is_pop_project()) {
+			float cost = economy::factory_type_build_cost(state, n, market, type);
+
+			// Don't let factory take too much debt
+			if(c.get_outstanding_debt() > cost * 0.3f) {
+				continue;
+			}
+			float output = economy::factory_type_output_cost(state, n, market, type);
+			float input = economy::factory_type_input_cost(state, n, market, type);
+
+			auto profit = (output - input) / cost;
+
+			c.get_outstanding_debt() += profit * target_loan / total_expected_profit;
+		}
+	}
+
+	return target_loan;
 }
 
 int32_t most_recent_price_record_index(sys::state& state) {
@@ -2670,6 +2736,22 @@ void update_single_factory_production(
 		state.world.factory_set_actual_production(f, amount);
 		register_domestic_supply(state, m, fac_type.get_output(), amount, economy_reason::factory);
 
+
+		if(fac.get_outstanding_debt() > 0.0f) {
+			auto debt_payment = fac.get_principal_debt() * interest_rate(state, n) * pow(1.0f + interest_rate(state,n), 1000.0f) / pow(1 + interest_rate(state, n), 1000.0f) - 1.0f;
+
+			if(money_made < debt_payment && national_bank_free_capital(state, n) > debt_payment - money_made) {
+				fac.get_outstanding_debt() += debt_payment - money_made;
+				fac.get_principal_debt() += debt_payment - money_made;
+			}
+
+			fac.get_outstanding_debt() -= debt_payment;
+			money_made -= debt_payment;
+		}
+		else if(fac.get_principal_debt() >= 0.0f) {
+			fac.set_principal_debt(0.0f);
+		}
+
 		if(!fac.get_subsidized()) {
 			state.world.factory_set_full_profit(f, money_made);
 		} else {
@@ -4181,18 +4263,15 @@ void update_pop_consumption(
 
 		savings = savings - spend_on_everyday_needs;
 
-		//handle savings before luxury goods spending
+		//handle bank deposits before luxury goods spending
 		auto savingsdelta = ve::apply(
 			[&](float s, dcon::pop_type_id pt, auto ln, dcon::nation_id n, bool ai) {
-				if(ai && (pt == state.culture_definitions.aristocrat || pt == state.culture_definitions.capitalists)) {
+				auto strata = culture::pop_strata(state.world.pop_type_get_strata(pt));
+				if(ai && (strata == culture::pop_strata::middle)) {
 					if(s > 0) {
-						if(pt == state.culture_definitions.capitalists) {
-							return -s * state.defines.alice_save_capitalist;
-						} else {
-							return -s * state.defines.alice_save_aristocrat;
-						}
+						return -s * state.defines.alice_save_capitalist;
 					}
-					else if(state.world.nation_get_national_bank(n) > ln - s) {
+					else if(state.world.nation_get_national_bank(n) > ln - s && national_bank_free_capital(state, n) > ln - s) {
 						return ln - s;
 					}
 				}
@@ -4413,6 +4492,7 @@ void update_pop_consumption(
 	});
 }
 
+// Spend already bought materials on advancing construction
 void advance_construction(sys::state& state, dcon::nation_id n) {
 	uint32_t total_commodities = state.world.commodity_size();
 	float p_spending = state.world.nation_get_private_investment_effective_fraction(n);
@@ -5565,10 +5645,18 @@ void daily_update(sys::state& state, bool presimulation, float presimulation_sta
 				state.world.nation_get_stockpiles(n, economy::money) -= change;
 			}
 
+			// Allocate private investment to construction
 			float pi_total = full_private_investment_cost(state, n);
 			float perceived_spending = pi_total * 10.f;
 			float pi_budget = state.world.nation_get_private_investment(n);
 			auto pi_scale = perceived_spending <= pi_budget ? 1.0f : pi_budget / perceived_spending;
+
+			// Calculate expected profits of current private investment projects and take loans to continue construction
+			if(pi_scale < 1.0f) {
+				auto granted_loan = private_borrowing_take_loan(state, n, pi_budget - perceived_spending);
+				pi_budget += granted_loan;
+				pi_scale = perceived_spending <= pi_budget ? 1.0f : pi_budget / perceived_spending;
+			}
 			//cut away low values:
 			pi_scale = std::max(0.f, pi_scale - 0.1f);
 			state.world.nation_set_private_investment_effective_fraction(n, pi_scale);
@@ -7635,7 +7723,7 @@ float unit_construction_progress(sys::state& state, dcon::province_naval_constru
 	return total > 0.0f ? purchased / total : 0.0f;
 }
 
-void add_factory_level_to_state(sys::state& state, dcon::state_instance_id s, dcon::factory_type_id t, bool is_upgrade) {
+void add_factory_level_to_state(sys::state& state, dcon::state_instance_id s, dcon::factory_type_id t, bool is_upgrade, float outstanding_debt = 0.0f) {
 
 	if(is_upgrade) {
 		auto d = state.world.state_instance_get_definition(s);
@@ -7658,6 +7746,8 @@ void add_factory_level_to_state(sys::state& state, dcon::state_instance_id s, dc
 	new_fac.set_building_type(t);
 	new_fac.set_level(uint8_t(1));
 	new_fac.set_production_scale(1.0f);
+	new_fac.set_principal_debt(outstanding_debt);
+	new_fac.set_outstanding_debt(outstanding_debt);
 
 	state.world.try_create_factory_location(new_fac, state_cap);
 }
@@ -7878,7 +7968,7 @@ void resolve_constructions(sys::state& state) {
 			}
 			if(all_finished) {
 				add_factory_level_to_state(state, state.world.state_building_construction_get_state(c), type,
-						state.world.state_building_construction_get_is_upgrade(c));
+						state.world.state_building_construction_get_is_upgrade(c), state.world.state_building_construction_get_outstanding_debt(c));
 
 				if(state.world.state_building_construction_get_nation(c) == state.local_player_nation) {
 					notification::post(state, notification::message{ [](sys::state& state, text::layout_base& contents) {
