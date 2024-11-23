@@ -4380,11 +4380,6 @@ object {
 		tag{ save }
 	}
 	property{
-		name{ principal_debt }
-		type{ float }
-		tag{ save }
-	}
-	property{
 		name{ outstanding_debt }
 		type{ float }
 		tag{ save }

@@ -737,10 +737,6 @@ float private_borrowing_take_loan(sys::state& state, dcon::nation_id n, float ta
 		if(c.get_is_pop_project()) {
 			float cost = economy::factory_type_build_cost(state, n, market, type);
 
-			// Don't let factory take too much debt
-			if(c.get_outstanding_debt() > cost * 0.3f) {
-				continue;
-			}
 			float output = economy::factory_type_output_cost(state, n, market, type);
 			float input = economy::factory_type_input_cost(state, n, market, type);
 
@@ -2764,18 +2760,11 @@ void update_single_factory_production(
 
 
 		if(fac.get_outstanding_debt() > 0.0f) {
-			auto debt_payment = fac.get_principal_debt() * interest_rate(state, n) * pow(1.0f + interest_rate(state,n), 1000.0f) / pow(1 + interest_rate(state, n), 1000.0f) - 1.0f;
-
-			if(money_made < debt_payment && national_bank_free_capital(state, n) > debt_payment - money_made) {
-				fac.get_outstanding_debt() += debt_payment - money_made;
-				fac.get_principal_debt() += debt_payment - money_made;
-			}
+			auto debt_payment = fac.get_outstanding_debt() * (interest_rate(state, n) + 0.01f);
+			debt_payment = std::clamp(debt_payment, 1.0f, money_made);
 
 			fac.get_outstanding_debt() -= debt_payment;
 			money_made -= debt_payment;
-		}
-		else if(fac.get_principal_debt() >= 0.0f) {
-			fac.set_principal_debt(0.0f);
 		}
 
 		if(!fac.get_subsidized()) {
