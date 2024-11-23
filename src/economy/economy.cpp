@@ -658,22 +658,42 @@ float interest_rate(sys::state& state, dcon::nation_id n) {
 }
 float interest_payment(sys::state& state, dcon::nation_id n) {
 	
-	auto debt = state.world.nation_get_local_loan(n);
-	return debt * interest_rate(state, n);
+	auto ip = state.world.nation_get_local_loan(n) * interest_rate(state, n);
+	if(ip < 0.0f) {
+		return 0.0f;
+	}
+	return ip;
 }
 float max_loan(sys::state& state, dcon::nation_id n) {
 	/*
 	There is an income cap to how much may be borrowed, namely: define:MAX_LOAN_CAP_FROM_BANKS x (national-modifier-to-max-loan-amount + 1) x national-tax-base.
 	*/
-	auto mod = (state.world.nation_get_modifier_values(n, sys::national_mod_offsets::max_loan_modifier) + 1.0f);
-	auto total_tax_base = state.world.nation_get_total_rich_income(n) + state.world.nation_get_total_middle_income(n) + state.world.nation_get_total_poor_income(n);
-	return std::max(0.0f, (total_tax_base + state.world.nation_get_national_bank(n)) * mod);
+	//auto total_tax_base = state.world.nation_get_total_rich_income(n) + state.world.nation_get_total_middle_income(n) + state.world.nation_get_total_poor_income(n);
+	return std::max(0.0f, national_bank_free_capital(state, n));
 }
 float national_bank_free_capital(sys::state& state, dcon::nation_id n) {
 	auto tnb = state.world.nation_get_national_bank(n);
-	auto debt = state.world.nation_get_local_loan(n);
+	auto mod = (state.world.nation_get_modifier_values(n, sys::national_mod_offsets::max_loan_modifier) + 1.0f);
+	tnb *= mod;
 
-	return tnb - debt;
+	tnb -= state.world.nation_get_local_loan(n);
+
+	for(auto c : state.world.nation_get_state_building_construction(n)) {
+		auto type = state.world.state_building_construction_get_type(c);
+
+		auto market = c.get_state().get_market_from_local_market();
+		if(c.get_is_pop_project()) {
+			tnb -= c.get_outstanding_debt();
+		}
+	}
+
+	for(auto p : state.world.nation_get_province_ownership(n)) {
+		for(auto f : state.world.province_get_factory_location(p.get_province())) {
+			tnb -= f.get_factory().get_outstanding_debt();
+		}
+	}
+
+	return std::max(0.0f, tnb);
 }
 
 // Calculate expected profits of current private investment projects and take loans to continue construction
@@ -696,15 +716,16 @@ float private_borrowing_take_loan(sys::state& state, dcon::nation_id n, float ta
 		auto market = c.get_state().get_market_from_local_market();
 		if(c.get_is_pop_project()) {
 			float cost = economy::factory_type_build_cost(state, n, market, type);
-
-			// Don't let factory take too much debt
-			if(c.get_outstanding_debt() > cost * 0.3f) {
-				continue;
-			}
 			float output = economy::factory_type_output_cost(state, n, market, type);
 			float input = economy::factory_type_input_cost(state, n, market, type);
 
 			auto profit = (output - input) / cost;
+
+			// Don't let factory take too much debt
+			if(c.get_outstanding_debt() > cost * 0.3f || profit < 0 || profit * 0.5f < interest_rate(state, n) * c.get_outstanding_debt()) {
+				continue;
+			}
+
 			total_expected_profit += profit;
 		}
 	}
@@ -725,7 +746,12 @@ float private_borrowing_take_loan(sys::state& state, dcon::nation_id n, float ta
 
 			auto profit = (output - input) / cost;
 
-			c.get_outstanding_debt() += profit * target_loan / total_expected_profit;
+			// Don't let factory take too much debt
+			if(c.get_outstanding_debt() > cost * 0.3f || profit < 0 || profit * 0.5f < interest_rate(state, n) * c.get_outstanding_debt()) {
+				continue;
+			}
+
+ 			c.get_outstanding_debt() += profit * target_loan / total_expected_profit;
 		}
 	}
 
@@ -5630,19 +5656,28 @@ void daily_update(sys::state& state, bool presimulation, float presimulation_sta
 
 			auto s = state.world.nation_get_stockpiles(n, economy::money);
 			auto l = state.world.nation_get_local_loan(n);
-			if(s < 0 && l < max_loan(state, n) &&
+
+			// Make a state bank deposit
+			if(l <= 0 && s > 0) {
+				auto const di_spending =
+					float(state.world.nation_get_domestic_investment_spending(n))
+					* float(state.world.nation_get_domestic_investment_spending(n))
+					/ 100.0f
+					/ 100.0f;
+				auto domestic_investment_total = spending_scale * estimate_domestic_investment(state, n) * di_spending;
+				state.world.nation_get_national_bank(n) += domestic_investment_total;
+				state.world.nation_get_local_loan(n) -= domestic_investment_total;
+				state.world.nation_get_stockpiles(n, economy::money) -= domestic_investment_total;
+			}
+			// Take loan
+			else if(s < 0 && l < max_loan(state, n) &&
 				std::abs(s) <= max_loan(state, n) - l) {
 				state.world.nation_get_local_loan(n) += std::abs(s);
 				state.world.nation_set_stockpiles(n, economy::money, 0);
 			}
 			else if (s < 0) {
-				// Nation somehow got into negative bigger than its loans allow
+				// Nation got into negative bigger than its loans allow
 				go_bankrupt(state, n);
-			}
-			else if(s > 0 && l > 0) {
-				auto change = std::min(s, l);
-				state.world.nation_get_local_loan(n) -= change;
-				state.world.nation_get_stockpiles(n, economy::money) -= change;
 			}
 
 			// Allocate private investment to construction
@@ -5653,7 +5688,7 @@ void daily_update(sys::state& state, bool presimulation, float presimulation_sta
 
 			// Calculate expected profits of current private investment projects and take loans to continue construction
 			if(pi_scale < 1.0f) {
-				auto granted_loan = private_borrowing_take_loan(state, n, pi_budget - perceived_spending);
+				auto granted_loan = private_borrowing_take_loan(state, n, perceived_spending - pi_budget);
 				pi_budget += granted_loan;
 				pi_scale = perceived_spending <= pi_budget ? 1.0f : pi_budget / perceived_spending;
 			}
@@ -5834,7 +5869,6 @@ void daily_update(sys::state& state, bool presimulation, float presimulation_sta
 		auto const m_spending = owner_spending * ve::to_float(state.world.nation_get_military_spending(owners)) * ve::to_float(state.world.nation_get_military_spending(owners)) / 100.0f / 100.0f;
 		auto const p_level = state.world.nation_get_modifier_values(owners, sys::national_mod_offsets::pension_level);
 		auto const unemp_level = state.world.nation_get_modifier_values(owners, sys::national_mod_offsets::unemployment_benefit);
-		auto const di_level = owner_spending * ve::to_float(state.world.nation_get_domestic_investment_spending(owners)) * ve::to_float(state.world.nation_get_domestic_investment_spending(owners)) / 100.0f / 100.f;
 
 		auto types = state.world.pop_get_poptype(ids);
 
@@ -5868,9 +5902,6 @@ void daily_update(sys::state& state, bool presimulation, float presimulation_sta
 		acc_a = acc_a + ve::select(en_types == int32_t(culture::income_type::administration), a_spending * adj_pop_of_type * en_costs, 0.0f);
 		acc_e = acc_e + ve::select(en_types == int32_t(culture::income_type::education), e_spending * adj_pop_of_type * en_costs, 0.0f);
 		acc_m = acc_m + ve::select(en_types == int32_t(culture::income_type::military), m_spending * adj_pop_of_type * en_costs, 0.0f);
-
-		acc_u = acc_u + ve::select(types == state.culture_definitions.capitalists, di_level * adj_pop_of_type * state.defines.alice_domestic_investment_multiplier * total_costs, 0.0f);
-		acc_u = acc_u + ve::select(types == state.culture_definitions.aristocrat, di_level * adj_pop_of_type * state.defines.alice_domestic_investment_multiplier * total_costs, 0.0f);
 
 		acc_a = acc_a + ve::select(lx_types == int32_t(culture::income_type::administration), a_spending * adj_pop_of_type * lx_costs, 0.0f);
 		acc_e = acc_e + ve::select(lx_types == int32_t(culture::income_type::education), e_spending * adj_pop_of_type * lx_costs, 0.0f);

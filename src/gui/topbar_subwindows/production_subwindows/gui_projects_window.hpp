@@ -62,6 +62,7 @@ protected:
 
 class production_project_invest_button : public button_element_base {
 public:
+	dcon::state_building_construction_id construction_id;
 	void on_create(sys::state& state) noexcept override {
 		disabled = true;
 	}
@@ -72,12 +73,18 @@ public:
 		//}
 	}
 	tooltip_behavior has_tooltip(sys::state& state) noexcept override {
-		return tooltip_behavior::tooltip;
+		return tooltip_behavior::variable_tooltip;
 	}
 	void update_tooltip(sys::state& state, int32_t x, int32_t y, text::columnar_layout& contents) noexcept override {
 		text::add_line(state, contents, "alice_domestic_investment_button");
+
+		if(construction_id) {
+			float outstanding_loan = state.world.state_building_construction_get_outstanding_debt(construction_id);
+			text::add_line(state, contents, "alice_construction_project_outstanding_debt", text::variable_type::x, std::to_string(outstanding_loan));
+		}
 	}
 };
+
 
 class production_project_info : public listbox_row_element_base<production_project_data> {
 	image_element_base* building_icon = nullptr;
@@ -133,7 +140,11 @@ public:
 		} else if(name == "pop_icon" || name == "pop_amount") {
 			return make_element_by_type<invisible_element>(state, id);
 		} else if(name == "invest_project") {
-			return make_element_by_type<production_project_invest_button>(state, id);
+			auto ptr = make_element_by_type<production_project_invest_button>(state, id);
+			if(std::holds_alternative<dcon::state_building_construction_id>(content)) {
+				ptr.get()->construction_id = std::get<dcon::state_building_construction_id>(content);
+			}
+			return ptr;
 		} else if(name == "input_goods") {
 			auto ptr = make_element_by_type<production_project_input_listbox>(state, id);
 			input_listbox = ptr.get();
@@ -196,7 +207,12 @@ public:
 				purchased_cost += economy::price(state, s, cid) * satisfied_commodities.commodity_amounts[i];
 		}
 		float total_cost = get_cost(state, needed_commodities);
-		cost_text->set_text(state, text::format_money(purchased_cost) + "/" + text::format_money(total_cost));
+		if(std::holds_alternative<dcon::province_building_construction_id>(content)) {
+			cost_text->set_text(state, text::format_money(purchased_cost) + "/" + text::format_money(total_cost));
+
+		} else if(std::holds_alternative<dcon::state_building_construction_id>(content)) {
+			cost_text->set_text(state, text::format_money(purchased_cost) + text::format_money(state.world.state_building_construction_get_outstanding_debt(std::get<dcon::state_building_construction_id>(content))) + "/" + text::format_money(total_cost));
+		}
 	}
 
 	message_result get(sys::state& state, Cyto::Any& payload) noexcept override {

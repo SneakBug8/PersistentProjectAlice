@@ -876,8 +876,9 @@ public:
 class nation_budget_bank_text : public standard_nation_text {
 public:
 	std::string get_text(sys::state& state, dcon::nation_id nation_id) noexcept override {
+		auto freecapital = economy::national_bank_free_capital(state, nation_id);
 		auto budget = nations::get_bank_funds(state, nation_id);
-		return text::format_money(budget);
+		return text::format_money(freecapital) + " / " + text::format_money(budget);
 	}
 };
 
