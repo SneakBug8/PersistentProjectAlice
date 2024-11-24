@@ -5353,5 +5353,35 @@ guiTypes = {
 			format = right
 		}
     }
-    
+	windowType = {
+		name = "country_production"
+		backGround =""
+		position = { x=-512 y=-250 }	
+		size = { x=1024 y=632 }
+		moveable = 0
+		dontRender = ""
+		horizontalBorder = "0"
+		verticalBorder = ""
+		fullScreen = no
+		orientation="CENTER"
+
+		guiButtonType = {
+			name = "tab_bank"
+			position = { x= 655 y = 14}
+			quadTextureSprite = "GFX_prod_tab_button"		
+			buttonText="PRODUCTION_PROJECTS_TAB"	
+			buttonFont = "vic_18_black"
+			Orientation = "UPPER_LEFT"
+			clicksound = click
+		}
+		instantTextBoxType = { 
+			name = "tab_bank_text"
+			position = { x = 655 y = 21 }
+			font = "vic_22_black"
+			text = "PRODUCTION_PROJECTS_TAB"	
+			maxWidth = 145
+			maxHeight = 20	
+			format = centre
+		}
+	}
 }

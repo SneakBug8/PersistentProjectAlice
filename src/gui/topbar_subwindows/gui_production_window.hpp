@@ -1996,7 +1996,13 @@ public:
 			auto ptr = make_element_by_type<generic_tab_button<production_window_tab>>(state, id);
 			ptr->target = production_window_tab::goods;
 			return ptr;
-		} else if(name == "tab_factories_text") {
+		}
+		else if(name == "tab_bank") {
+			auto ptr = make_element_by_type<generic_tab_button<production_window_tab>>(state, id);
+			ptr->target = production_window_tab::bank;
+			return ptr;
+		}
+		else if(name == "tab_factories_text") {
 			return make_element_by_type<invisible_element>(state, id);
 		} else if(name == "tab_invest_text") {
 			return make_element_by_type<invisible_element>(state, id);
