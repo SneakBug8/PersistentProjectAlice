@@ -654,12 +654,12 @@ float interest_rate(sys::state& state, dcon::nation_id n) {
 	Every day, a nation must pay its creditors. It must pay national-modifier-to-loan-interest x debt-amount x interest-to-debt-holder-rate / 30
 	When a nation takes a loan, the interest-to-debt-holder-rate is set at nation-taking-the-loan-technology-loan-interest-modifier + define:LOAN_BASE_INTEREST, with a minimum of 0.01.
 	*/
-	return std::max(0.01f, (state.world.nation_get_modifier_values(n, sys::national_mod_offsets::loan_interest) + 1.0f) * state.defines.loan_base_interest) / 30.0f;
+	return std::max(0.01f, (state.world.nation_get_modifier_values(n, sys::national_mod_offsets::loan_interest) + 1.0f) *
+		(state.defines.loan_base_interest + state.world.nation_get_instability_interest_premium(n) + state.world.nation_get_added_minimal_interest(n)) / 30.0f);
 }
 float interest_payment(sys::state& state, dcon::nation_id n) {
-	
 	auto ip = state.world.nation_get_local_loan(n) * interest_rate(state, n);
-	if(ip < 0.0f) {
+	if(ip <= 0.0f) {
 		return 0.0f;
 	}
 	return ip;
@@ -669,10 +669,21 @@ float max_loan(sys::state& state, dcon::nation_id n) {
 	There is an income cap to how much may be borrowed, namely: define:MAX_LOAN_CAP_FROM_BANKS x (national-modifier-to-max-loan-amount + 1) x national-tax-base.
 	*/
 	//auto total_tax_base = state.world.nation_get_total_rich_income(n) + state.world.nation_get_total_middle_income(n) + state.world.nation_get_total_poor_income(n);
-	return std::max(0.0f, national_bank_free_capital(state, n));
+	return national_bank_free_capital(state, n);
 }
+
+float national_bank_reserve_rate(sys::state& state, dcon::nation_id n) {
+	return 0.1f + state.world.nation_get_instability_interest_premium(n) * 0.08f;
+}
+
+float national_bank_max_debt_financing_share(sys::state& state, dcon::nation_id n) {
+	return 0.5f - state.world.nation_get_instability_interest_premium(n) * 0.1f;
+}
+
 float national_bank_free_capital(sys::state& state, dcon::nation_id n) {
 	auto tnb = state.world.nation_get_national_bank(n);
+	tnb += state.world.nation_get_local_deposit(n);
+
 	auto mod = (state.world.nation_get_modifier_values(n, sys::national_mod_offsets::max_loan_modifier) + 1.0f);
 	tnb *= mod;
 
@@ -693,7 +704,7 @@ float national_bank_free_capital(sys::state& state, dcon::nation_id n) {
 		}
 	}
 
-	return std::max(0.0f, tnb);
+	return std::max(0.0f, tnb * (1.0f - national_bank_reserve_rate(state, n)));
 }
 
 // Calculate expected profits of current private investment projects and take loans to continue construction
@@ -722,7 +733,7 @@ float private_borrowing_take_loan(sys::state& state, dcon::nation_id n, float ta
 			auto profit = (output - input) / cost;
 
 			// Don't let factory take too much debt
-			if(c.get_outstanding_debt() > cost * 0.3f || profit < 0 || profit * 0.5f < interest_rate(state, n) * c.get_outstanding_debt()) {
+			if(c.get_outstanding_debt() > cost * national_bank_max_debt_financing_share(state, n) || profit < 0 || profit * 0.5f < interest_rate(state, n) * c.get_outstanding_debt()) {
 				continue;
 			}
 
@@ -752,6 +763,17 @@ float private_borrowing_take_loan(sys::state& state, dcon::nation_id n, float ta
 	}
 
 	return target_loan;
+}
+
+// Recalculate deposits based on a loss taken by the bank
+void national_bank_record_loss(sys::state& state, dcon::nation_id n, float loss) {
+	auto tnb = state.world.nation_get_national_bank(n);
+	auto state_deposit = state.world.nation_get_local_deposit(n);
+
+	auto total = tnb + state_deposit;
+
+	state.world.nation_get_local_deposit(n) -= loss * state_deposit / total;
+	state.world.nation_get_national_bank(n) -= loss * (1 - state_deposit / total);
 }
 
 int32_t most_recent_price_record_index(sys::state& state) {
@@ -2534,6 +2556,15 @@ float update_factory_scale(
 	speed = std::clamp(speed, -relative_modifier, relative_modifier);
 
 	auto new_production_scale = std::clamp(fac.get_production_scale() + speed, 0.f, 1.f);
+
+	// Factory is bankrupt
+	if(fac.get_production_scale() != new_production_scale && new_production_scale == 0.f && fac.get_outstanding_debt() > 0) {
+		auto nation = fac.get_province_from_factory_location().get_nation_from_province_ownership();
+		// Nation-level **instability interest premium (IIP)** moving between 0 and 5%
+		state.world.nation_get_instability_interest_premium(nation) = (uint8_t)std::clamp(0, 5, state.world.nation_get_instability_interest_premium(nation) + 1);
+
+		national_bank_record_loss(state, nation, fac.get_outstanding_debt());
+	}
 	fac.set_production_scale(new_production_scale);
 	return std::min(new_production_scale * fac.get_level(), max_production_scale);
 }
@@ -5643,23 +5674,24 @@ void daily_update(sys::state& state, bool presimulation, float presimulation_sta
 			state.world.nation_get_stockpiles(n, economy::money) -= std::min(budget, total * spending_scale);
 			state.world.nation_set_spending_level(n, spending_scale);
 
-			auto s = state.world.nation_get_stockpiles(n, economy::money);
-			auto l = state.world.nation_get_local_loan(n);
+			auto const di_spending =
+				float(state.world.nation_get_domestic_investment_spending(n))
+				* float(state.world.nation_get_domestic_investment_spending(n))
+				/ 100.0f
+				/ 100.0f;
 
 			// Make a state bank deposit
-			if(l <= 0 && s > 0) {
-				auto const di_spending =
-					float(state.world.nation_get_domestic_investment_spending(n))
-					* float(state.world.nation_get_domestic_investment_spending(n))
-					/ 100.0f
-					/ 100.0f;
+			if(di_spending > 0) {
 				auto domestic_investment_total = spending_scale * estimate_domestic_investment(state, n) * di_spending;
-				state.world.nation_get_national_bank(n) += domestic_investment_total;
-				state.world.nation_get_local_loan(n) -= domestic_investment_total;
+				state.world.nation_get_local_deposit(n) += domestic_investment_total;
 				state.world.nation_get_stockpiles(n, economy::money) -= domestic_investment_total;
 			}
+
+			auto l = state.world.nation_get_local_loan(n);
+			auto s = state.world.nation_get_stockpiles(n, economy::money);
+
 			// Take loan
-			else if(s < 0 && l < max_loan(state, n) &&
+			if(s < 0 && l < max_loan(state, n) &&
 				std::abs(s) <= max_loan(state, n) - l) {
 				state.world.nation_get_local_loan(n) += std::abs(s);
 				state.world.nation_set_stockpiles(n, economy::money, 0);
@@ -7801,7 +7833,6 @@ void add_factory_level_to_state(sys::state& state, dcon::state_instance_id s, dc
 	new_fac.set_building_type(t);
 	new_fac.set_level(uint8_t(1));
 	new_fac.set_production_scale(1.0f);
-	new_fac.set_principal_debt(outstanding_debt);
 	new_fac.set_outstanding_debt(outstanding_debt);
 
 	state.world.try_create_factory_location(new_fac, state_cap);

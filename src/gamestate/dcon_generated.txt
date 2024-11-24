@@ -3761,6 +3761,21 @@ object {
 		tag{ save }
 	}
 	property {
+		name{ local_deposit }
+		type{ float }
+		tag{ save }
+	}
+	property {
+		name{ instability_interest_premium }
+		type{ uint8_t }
+		tag{ save }
+	}
+	property {
+		name{ added_minimal_interest }
+		type{ uint8_t }
+		tag{ save }
+	}
+	property {
 		name{ stockpile_targets }
 		type{ array{commodity_id}{float} }
 		tag{ save }
