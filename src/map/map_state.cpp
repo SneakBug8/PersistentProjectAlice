@@ -125,7 +125,25 @@ void update_trade_flow_arrows(sys::state& state, display_data& map_data) {
 
 		auto absolute_volume = std::abs(sat * current_volume);
 
-		if(absolute_volume <= std::clamp(average, 0.001f, 5.f)) {
+		// If a province selected - show all routes belonging to the state market
+		auto selected_province = state.map_state.get_selected_province();
+
+		if (absolute_volume >= std::clamp(average, 0.001f, 5.f)) {
+			// Always allow big routes
+		}
+		// Show all routes for the selected province
+		else if(selected_province) {
+			auto selected_province_state = state.world.province_get_state_membership(selected_province);
+
+			if(absolute_volume <= 0.001f) {
+				return;
+			}
+
+			if(selected_province_state.id != s_origin && selected_province_state.id != s_target) {
+				return;
+			}
+		}
+		else {
 			return;
 		}
 
@@ -139,6 +157,26 @@ void update_trade_flow_arrows(sys::state& state, display_data& map_data) {
 		if(is_sea) {
 			auto coast_origin = province::state_get_coastal_capital(state, s_origin);
 			auto coast_target = province::state_get_coastal_capital(state, s_target);
+
+			if(coast_origin != p_origin) {
+
+				map::make_land_path(
+					state,
+					map_data.trade_flow_vertices,
+					p_origin, coast_origin,
+					width,
+					float(map_data.size_x), float(map_data.size_y)
+				);
+			}
+			if(coast_target != p_target) {
+				map::make_land_path(
+					state,
+					map_data.trade_flow_vertices,
+					p_target, coast_target,
+					width,
+					float(map_data.size_x), float(map_data.size_y)
+				);
+			}
 
 			map::make_sea_path(
 				state,
@@ -248,6 +286,9 @@ void update_unit_arrows(sys::state& state, display_data& map_data) {
 	}
 
 	for(auto map_army : state.world.in_army) {
+		if(!state.world.army_is_valid(map_army)) {
+			return;
+		}
 		// Exclude if out of FOW
 		if(state.user_settings.fow_enabled || state.network_mode != sys::network_mode_type::single_player) {
 			auto pc = map_army.get_army_location().get_location().id;
@@ -288,6 +329,9 @@ void update_unit_arrows(sys::state& state, display_data& map_data) {
 		}
 	}
 	for(auto map_navy : state.world.in_navy) {
+		if(!state.world.navy_is_valid(map_navy)) {
+			return;
+		}
 		// Exclude if out of FOW
 		if(state.user_settings.fow_enabled || state.network_mode != sys::network_mode_type::single_player) {
 			auto pc = map_navy.get_navy_location().get_location().id;
@@ -1297,6 +1341,8 @@ void map_state::update(sys::state& state) {
 
 	if(unhandled_province_selection) {
 		map_mode::update_map_mode(state);
+		state.update_trade_flow.store(true, std::memory_order::release);
+
 		map_data.set_selected_province(state, selected_province);
 		unhandled_province_selection = false;
 	}
