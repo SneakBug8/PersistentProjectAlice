@@ -1287,3 +1287,21 @@ volume;Volume
 max_throughput;Max volume
 trade_margin;Profit%
 PRODUCTION_BANK_TAB;Bank
+country_name;Country name: $x$
+everyday_consumer_spending_decrease;Everyday Consumer Spending Decrease: $x$
+luxury_consumer_spending_decrease;Luxury Consumer Spending Decrease: $x$
+national_bank_max_debt_financing_share;Max % of Factory Cost as Debt: $x$
+assets;Assets
+state_debt;State debt: $x$
+private_borrowing;Private borrowing: $x$
+loans_to_foreign_banks;Loans to foreign banks: $x$
+bank_reserves;Bank Reserves: $x$
+free_capital;Free capital: $x$
+total;Total: $x$
+national_bank_interest_rate;National Bank Interest Rate
+instability_interest_premium;Instability Interest Premium: $x$
+added_minimal_interest;Added Minimal Interest: $x$
+liabilities;Liabilities
+state_deposit;State deposit: $x$
+pops_deposit;Middle class deposits: $x$
+debt_to_foreign_banks;Debt to foreign banks: $x$

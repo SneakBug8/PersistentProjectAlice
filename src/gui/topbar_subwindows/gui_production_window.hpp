@@ -1905,6 +1905,10 @@ class production_window : public generic_tabbed_window<production_window_tab> {
 	std::vector<element_base*> project_elements;
 	std::vector<element_base*> good_elements;
 	std::vector<element_base*> investment_nation;
+
+	std::vector<element_base*> bank_elements_vector;
+	std::map<std::string, simple_text_element_base*> bank_elements;
+
 	std::vector<bool> commodity_filters;
 	bool open_foreign_invest = false;
 
@@ -1919,6 +1923,7 @@ class production_window : public generic_tabbed_window<production_window_tab> {
 		set_visible_vector_elements(state, project_elements, false);
 		set_visible_vector_elements(state, good_elements, false);
 		set_visible_vector_elements(state, investment_nation, false);
+		set_visible_vector_elements(state, bank_elements_vector, false);
 	}
 
 public:
@@ -2068,7 +2073,15 @@ public:
 			project_elements.push_back(ptr.get());
 			ptr->set_visible(state, false);
 			return ptr;
-		} else {
+		}
+		else if(name.starts_with("bank_")) {
+			auto ptr = make_element_by_type<simple_text_element_base>(state, id);
+			bank_elements_vector.push_back(ptr.get());
+			bank_elements[std::string{ name }] = ptr.get();
+			ptr->set_visible(state, false);
+			return ptr;
+		}
+		else {
 			return nullptr;
 		}
 	}
@@ -2090,6 +2103,9 @@ public:
 				break;
 			case production_window_tab::goods:
 				set_visible_vector_elements(state, good_elements, true);
+				break;
+			case production_window_tab::bank:
+				set_visible_vector_elements(state, bank_elements_vector, true);
 				break;
 			}
 			active_tab = enum_val;
@@ -2178,6 +2194,11 @@ public:
 			return message_result::consumed;
 		}
 		return message_result::unseen;
+	}
+
+	void on_update(sys::state& state) noexcept override {
+		
+
 	}
 };
 

@@ -5353,35 +5353,228 @@ guiTypes = {
 			format = right
 		}
     }
-	windowType = {
-		name = "country_production"
-		backGround =""
-		position = { x=-512 y=-250 }	
-		size = { x=1024 y=632 }
-		moveable = 0
-		dontRender = ""
-		horizontalBorder = "0"
-		verticalBorder = ""
-		fullScreen = no
-		orientation="CENTER"
+	guiButtonType = {
+		name = "tab_bank"
+		position = { x= 655 y = 14}
+		quadTextureSprite = "GFX_prod_tab_button"		
+		buttonText="PRODUCTION_BANK_TAB"	
+		buttonFont = "vic_18_black"
+		Orientation = "UPPER_LEFT"
+		clicksound = click
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "tab_bank_text"
+		position = { x = 655 y = 21 }
+		font = "vic_22_black"
+		text = "PRODUCTION_BANK_TAB"	
+		maxWidth = 145
+		maxHeight = 20	
+		format = centre
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_country_name"
+		position = { x = 30 y = 60 }
+		font = "vic_18_black"
+		text = "country_name"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_everyday_consumer_spending_decrease"
+		position = { x = 30 y = 84 }
+		font = "vic_18_black"
+		text = "everyday_consumer_spending_decrease"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_luxury_consumer_spending_decrease"
+		position = { x = 30 y = 108 }
+		font = "vic_18_black"
+		text = "luxury_consumer_spending_decrease"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_national_bank_max_debt_financing_share"
+		position = { x = 30 y = 132 }
+		font = "vic_18_black"
+		text = "national_bank_max_debt_financing_share"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
 
-		guiButtonType = {
-			name = "tab_bank"
-			position = { x= 655 y = 14}
-			quadTextureSprite = "GFX_prod_tab_button"		
-			buttonText="PRODUCTION_PROJECTS_TAB"	
-			buttonFont = "vic_18_black"
-			Orientation = "UPPER_LEFT"
-			clicksound = click
-		}
-		instantTextBoxType = { 
-			name = "tab_bank_text"
-			position = { x = 655 y = 21 }
-			font = "vic_22_black"
-			text = "PRODUCTION_PROJECTS_TAB"	
-			maxWidth = 145
-			maxHeight = 20	
-			format = centre
-		}
+	instantTextBoxType = { 
+		name = "bank_national_bank_interest_rate"
+		position = { x = 490 y = 60 }
+		font = "vic_18_black"
+		text = "national_bank_interest_rate"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_instability_interest_premium"
+		position = { x = 490 y = 84 }
+		font = "vic_18_black"
+		text = "instability_interest_premium"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_added_minimal_interest"
+		position = { x = 490 y = 108 }
+		font = "vic_18_black"
+		text = "added_minimal_interest"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_interest_rate_total"
+		position = { x = 490 y = 132 }
+		font = "vic_18_black"
+		text = "total"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+
+	instantTextBoxType = { 
+		name = "bank_assets"
+		position = { x = 30 y = 166 }
+		font = "vic_18_black"
+		text = "assets"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_state_debt"
+		position = { x = 30 y = 190 }
+		font = "vic_18_black"
+		text = "state_debt"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_private_borrowing"
+		position = { x = 30 y = 214 }
+		font = "vic_18_black"
+		text = "private_borrowing"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_loans_to_foreign_banks"
+		position = { x = 30 y = 238 }
+		font = "vic_18_black"
+		text = "loans_to_foreign_banks"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_bank_reserves"
+		position = { x = 30 y = 262 }
+		font = "vic_18_black"
+		text = "bank_reserves"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_free_capital"
+		position = { x = 30 y = 286 }
+		font = "vic_18_black"
+		text = "free_capital"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_assets_total"
+		position = { x = 30 y = 310 }
+		font = "vic_18_black"
+		text = "total"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+
+
+	instantTextBoxType = { 
+		name = "bank_liabilities"
+		position = { x = 490 y = 166 }
+		font = "vic_18_black"
+		text = "liabilities"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_state_deposit"
+		position = { x = 490 y = 190 }
+		font = "vic_18_black"
+		text = "state_deposit"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_pops_deposit"
+		position = { x = 490 y = 214 }
+		font = "vic_18_black"
+		text = "pops_deposit"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_debt_to_foreign_banks"
+		position = { x = 490 y = 238 }
+		font = "vic_18_black"
+		text = "debt_to_foreign_banks"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
+	}
+	instantTextBoxType = { 
+		name = "bank_liabilities_total"
+		position = { x = 490 y = 310 }
+		font = "vic_18_black"
+		text = "total"	
+		maxWidth = 450
+		maxHeight = 20	
+		format = left
+		extends = "country_production"
 	}
 }
