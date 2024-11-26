@@ -78,16 +78,16 @@ inline void init(sys::state& state) noexcept {
 				j["state_debt"] = state_debt;
 
 				j["bank_max_debt_financing_share"] = text::format_percentage(economy::national_bank_max_debt_financing_share(state, nation));
-				j["bank_private_borrowing"] = text::format_money(economy::national_bank_private_borrowing(state, nation));
-				j["bank_reserves"] = text::format_money(reserve_rate * total_assets);
+				j["bank_private_borrowing"] = text::format_float(economy::national_bank_private_borrowing(state, nation));
+				j["bank_reserves"] = text::format_float(reserve_rate * total_assets);
 				j["bank_free_capital"] = economy::national_bank_free_capital(state, nation);
-				j["bank_assets_total"] = text::format_money(total_assets);
+				j["bank_assets_total"] = text::format_float(total_assets);
 				j["bank_interest_rate_total"] = text::format_percentage(economy::interest_rate(state, nation) * 30.f);
 				j["bank_instability_interest_premium"] = text::format_percentage(state.world.nation_get_instability_interest_premium(nation) / 100.f);
 				j["bank_added_minimal_interest"] = text::format_percentage(state.world.nation_get_added_minimal_interest(nation) / 100.f);
 
-				j["bank_state_deposit"] = text::format_money(state.world.nation_get_local_deposit(nation));
-				j["bank_pops_deposit"] = text::format_money(state.world.nation_get_national_bank(nation));
+				j["bank_state_deposit"] = text::format_float(state.world.nation_get_local_deposit(nation));
+				j["bank_pops_deposit"] = text::format_float(state.world.nation_get_national_bank(nation));
 
 				jlist.push_back(j);
 			}
