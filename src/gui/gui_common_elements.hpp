@@ -868,8 +868,9 @@ public:
 class nation_budget_funds_text : public standard_nation_text {
 public:
 	std::string get_text(sys::state& state, dcon::nation_id nation_id) noexcept override {
-		auto budget = nations::get_treasury(state, nation_id);
-		return text::format_money(budget);
+		// auto budget = nations::get_treasury(state, nation_id);
+		auto deposit = state.world.nation_get_local_deposit(nation_id);
+		return text::format_money(deposit);
 	}
 };
 
@@ -878,7 +879,7 @@ public:
 	std::string get_text(sys::state& state, dcon::nation_id nation_id) noexcept override {
 		auto freecapital = economy::national_bank_free_capital(state, nation_id);
 		auto budget = nations::get_bank_funds(state, nation_id);
-		return text::format_money(freecapital) + " / " + text::format_money(budget);
+		return text::format_money(freecapital);
 	}
 };
 

@@ -2197,8 +2197,94 @@ public:
 	}
 
 	void on_update(sys::state& state) noexcept override {
-		
-
+		auto n = state.local_player_nation;
+		if(bank_elements["bank_country_name"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::get_name(state, n));
+			bank_elements["bank_country_name"]->set_text(state, text::resolve_string_substitution(state, "country_name", sub));
+		}
+		if(bank_elements["bank_everyday_consumer_spending_decrease"]) {
+			text::substitution_map sub{};
+			//text::add_to_substitution_map(sub, text::variable_type::x, text::get_name(state, n));
+			bank_elements["bank_everyday_consumer_spending_decrease"]->set_text(state, text::resolve_string_substitution(state, "everyday_consumer_spending_decrease", sub));
+		}
+		if(bank_elements["bank_luxury_consumer_spending_decrease"]) {
+			text::substitution_map sub{};
+			//text::add_to_substitution_map(sub, text::variable_type::x, text::get_name(state, n));
+			bank_elements["bank_luxury_consumer_spending_decrease"]->set_text(state, text::resolve_string_substitution(state, "luxury_consumer_spending_decrease", sub));
+		}
+		if(bank_elements["bank_national_bank_max_debt_financing_share"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_percentage_one_place{ economy::national_bank_max_debt_financing_share(state, n) });
+			bank_elements["bank_national_bank_max_debt_financing_share"]->set_text(state, text::resolve_string_substitution(state, "national_bank_max_debt_financing_share", sub));
+		}
+		if(bank_elements["bank_state_debt"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_currency{ state.world.nation_get_local_loan(n) });
+			bank_elements["bank_state_debt"]->set_text(state, text::resolve_string_substitution(state, "state_debt", sub));
+		}
+		if(bank_elements["bank_private_borrowing"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_currency{ economy::national_bank_private_borrowing(state, n) });
+			bank_elements["bank_private_borrowing"]->set_text(state, text::resolve_string_substitution(state, "private_borrowing", sub));
+		}
+		if(bank_elements["bank_loans_to_foreign_banks"]) {
+			text::substitution_map sub{};
+			//text::add_to_substitution_map(sub, text::variable_type::x, text::format_money(state.world.nation_get_local_loan(n)));
+			bank_elements["bank_loans_to_foreign_banks"]->set_text(state, text::resolve_string_substitution(state, "loans_to_foreign_banks", sub));
+		}
+		if(bank_elements["bank_bank_reserves"]) {
+			text::substitution_map sub{};
+			auto reserve_rate = economy::national_bank_reserve_rate(state, n);
+			auto total_assets = economy::national_bank_total_capital(state, n);
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_currency{ total_assets * reserve_rate });
+			bank_elements["bank_bank_reserves"]->set_text(state, text::resolve_string_substitution(state, "bank_reserves", sub));
+		}
+		if(bank_elements["bank_free_capital"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_currency{ economy::national_bank_free_capital(state, n) });
+			bank_elements["bank_free_capital"]->set_text(state, text::resolve_string_substitution(state, "free_capital", sub));
+		}
+		if(bank_elements["bank_assets_total"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_currency{ economy::national_bank_total_capital(state, n) });
+			bank_elements["bank_assets_total"]->set_text(state, text::resolve_string_substitution(state, "total", sub));
+		}
+		if(bank_elements["bank_interest_rate_total"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_percentage_one_place{ economy::interest_rate(state, n) * 30.f });
+			bank_elements["bank_interest_rate_total"]->set_text(state, text::resolve_string_substitution(state, "total", sub));
+		}
+		if(bank_elements["bank_instability_interest_premium"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_percentage_one_place{ state.world.nation_get_instability_interest_premium(n) / 100.f });
+			bank_elements["bank_instability_interest_premium"]->set_text(state, text::resolve_string_substitution(state, "instability_interest_premium", sub));
+		}
+		if(bank_elements["bank_added_minimal_interest"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_percentage_one_place{ state.world.nation_get_added_minimal_interest(n) / 100.f });
+			bank_elements["bank_added_minimal_interest"]->set_text(state, text::resolve_string_substitution(state, "added_minimal_interest", sub));
+		}
+		if(bank_elements["bank_state_deposit"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_currency{ state.world.nation_get_local_deposit(n) });
+			bank_elements["bank_state_deposit"]->set_text(state, text::resolve_string_substitution(state, "state_deposit", sub));
+		}
+		if(bank_elements["bank_pops_deposit"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_currency{ state.world.nation_get_national_bank(n) });
+			bank_elements["bank_pops_deposit"]->set_text(state, text::resolve_string_substitution(state, "pops_deposit", sub));
+		}
+		if(bank_elements["bank_debt_to_foreign_banks"]) {
+			text::substitution_map sub{};
+			//text::add_to_substitution_map(sub, text::variable_type::x, text::format_percentage(state.world.nation_get_national_bank(n)));
+			bank_elements["bank_debt_to_foreign_banks"]->set_text(state, text::resolve_string_substitution(state, "debt_to_foreign_banks", sub));
+		}
+		if(bank_elements["bank_liabilities_total"]) {
+			text::substitution_map sub{};
+			text::add_to_substitution_map(sub, text::variable_type::x, text::fp_currency{ economy::national_bank_total_capital(state, n) });
+			bank_elements["bank_liabilities_total"]->set_text(state, text::resolve_string_substitution(state, "total", sub));
+		}
 	}
 };
 

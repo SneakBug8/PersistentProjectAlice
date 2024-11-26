@@ -1118,9 +1118,9 @@ att_call_will_accept;$x$ will join your war
 att_call_will_decline;$x$ will not join your war
 att_call_is_human;$x$ may join your war
 att_call_no_allies;You don't have any allies!
-domestic_investment_label;Domestic investment:
-modifier_min_domestic_investment;Min domestic investment rate
-modifier_max_domestic_investment;Max domestic investment rate
+domestic_investment_label;Bank deposit:
+modifier_min_domestic_investment;Min investment rate
+modifier_max_domestic_investment;Max  investment rate
 mouse_left_click_mode_label;Click hold release
 alice_supply_limit_desc;Supply limit: $x$
 alice_factory_worker_1;Employed: ?G$x$?W
@@ -1287,13 +1287,15 @@ volume;Volume
 desired_volume; Desired Volume
 max_throughput;Max volume
 trade_margin;Profit%
+NATIONAL_BANK;Available Capital
+BUDGET_TOTAL_FUNDS;State Bank Deposit
 PRODUCTION_BANK_TAB;Bank
 country_name;Country name: $x$
 everyday_consumer_spending_decrease;Everyday Consumer Spending Decrease: $x$
 luxury_consumer_spending_decrease;Luxury Consumer Spending Decrease: $x$
 national_bank_max_debt_financing_share;Max % of Factory Cost as Debt: $x$
 assets;Assets
-state_debt;State debt: $x$
+state_debt;State Debt: $x$
 private_borrowing;Private borrowing: $x$
 loans_to_foreign_banks;Loans to foreign banks: $x$
 bank_reserves;Bank Reserves: $x$
@@ -1303,6 +1305,6 @@ national_bank_interest_rate;National Bank Interest Rate
 instability_interest_premium;Instability Interest Premium: $x$
 added_minimal_interest;Added Minimal Interest: $x$
 liabilities;Liabilities
-state_deposit;State deposit: $x$
+state_deposit;State Deposit: $x$
 pops_deposit;Middle class deposits: $x$
 debt_to_foreign_banks;Debt to foreign banks: $x$

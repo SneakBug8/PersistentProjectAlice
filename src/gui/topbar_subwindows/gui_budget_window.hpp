@@ -610,19 +610,22 @@ public:
 		case budget_slider_target::domestic_investment:
 		{
 			auto min_domestic_investment = int32_t(
-				100.0f * state.world.nation_get_modifier_values(state.local_player_nation, sys::national_mod_offsets::min_domestic_investment));
+				-100.0f * state.world.nation_get_modifier_values(state.local_player_nation, sys::national_mod_offsets::max_domestic_investment));
 			auto max_domestic_investment = int32_t(
 				100.0f * state.world.nation_get_modifier_values(state.local_player_nation, sys::national_mod_offsets::max_domestic_investment));
 			if(max_domestic_investment <= 0)
 				max_domestic_investment = 100;
+			if(min_domestic_investment >= 0)
+				min_domestic_investment = -100;
 			max_domestic_investment = std::max(min_domestic_investment, max_domestic_investment);
+			min_domestic_investment = std::min(min_domestic_investment, max_domestic_investment);
 
 			mutable_scrollbar_settings new_settings;
-			new_settings.lower_value = 0;
+			new_settings.lower_value = -100;
 			new_settings.upper_value = 100;
 			new_settings.using_limits = true;
-			new_settings.lower_limit = std::clamp(min_domestic_investment, 0, 100);
-			new_settings.upper_limit = std::clamp(max_domestic_investment, 0, 100);
+			new_settings.lower_limit = std::clamp(min_domestic_investment, -100, 100);
+			new_settings.upper_limit = std::clamp(max_domestic_investment, -100, 100);
 			change_settings(state, new_settings);
 		} break;
 		default:
@@ -1392,7 +1395,6 @@ public:
 				economy::estimate_pop_payouts_by_income_type(state, state.local_player_nation, culture::income_type::administration);
 		vals[uint8_t(budget_slider_target::military)] =
 				economy::estimate_pop_payouts_by_income_type(state, state.local_player_nation, culture::income_type::military);
-		vals[uint8_t(budget_slider_target::domestic_investment)] = economy::estimate_domestic_investment(state, state.local_player_nation);
 		vals[uint8_t(budget_slider_target::subsidies)] = economy::estimate_subsidy_spending(state, state.local_player_nation);
 		vals[uint8_t(budget_slider_target::overseas)] = economy::estimate_overseas_penalty_spending(state, state.local_player_nation);
 		vals[uint8_t(budget_slider_target::stockpile_filling)] = economy::estimate_stockpile_filling_spending(state, state.local_player_nation);
@@ -1826,7 +1828,7 @@ public:
 	}
 };
 
-class domestic_investment_slider : public budget_slider<budget_slider_target::domestic_investment, slider_scaling::quadratic, slider_update_type::autoscalerupdate> {
+class domestic_investment_slider : public budget_slider<budget_slider_target::domestic_investment, slider_scaling::linear, slider_update_type::autoscalerupdate> {
 	int32_t get_true_value(sys::state& state) noexcept override {
 		return int32_t(state.world.nation_get_domestic_investment_spending(state.local_player_nation));
 	}
@@ -1869,7 +1871,7 @@ class domestic_investment_estimated_text : public simple_text_element_base {
 public:
 	void on_update(sys::state& state) noexcept override {
 		float value = state.world.nation_get_domestic_investment_spending(state.local_player_nation) / 100.0f;
-		set_text(state, text::format_money(economy::estimate_domestic_investment(state, state.local_player_nation) * value * value));
+		set_text(state, text::format_money(economy::estimate_domestic_investment(state, state.local_player_nation) * value));
 	}
 };
 
@@ -1902,6 +1904,8 @@ private:
 	budget_take_loan_window* budget_take_loan_win = nullptr;
 	budget_repay_loan_window* budget_repay_loan_win = nullptr;
 
+	domestic_investment_slider* dom_inv_slider = nullptr;
+
 public:
 	void on_create(sys::state& state) noexcept override {
 		window_element_base::on_create(state);
@@ -1925,6 +1929,7 @@ public:
 
 		{
 			auto elm = make_element_by_type<domestic_investment_slider>(state, state.ui_state.defs_by_name.find(state.lookup_key("alice_domestic_investment_slider"))->second.definition);
+			dom_inv_slider = elm.get();
 			add_child_to_front(std::move(elm));
 		}
 		{
@@ -2121,6 +2126,16 @@ public:
 		}
 
 		return message_result::unseen;
+	}
+
+	void on_update(sys::state& state) noexcept override {
+		if(dom_inv_slider != nullptr) {
+			if(!economy::can_make_state_deposit(state, state.local_player_nation)) {
+				dom_inv_slider->set_visible(state, false);
+			} else {
+				dom_inv_slider->set_visible(state, true);
+			}
+		}
 	}
 };
 

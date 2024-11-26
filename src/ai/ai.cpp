@@ -3177,8 +3177,14 @@ void update_budget(sys::state& state) {
 			float max_investment_budget = 1.f + economy::estimate_domestic_investment(state, n);
 			float investment_ratio = 100.f * math::sqrt(investment_budget / max_investment_budget);
 			investment_ratio = std::clamp(investment_ratio, 0.f, 100.f);
+			if(!n.get_is_at_war() && economy::national_bank_free_capital(state, n) <= investment_budget * 30.f) {
 			n.set_domestic_investment_spending(int8_t(investment_ratio));
-		} else {
+			}
+			else if (n.get_is_at_war()) {
+				n.set_domestic_investment_spending(int8_t(-investment_ratio));
+			}
+		}
+		else {
 			n.set_domestic_investment_spending(int8_t(0));
 		}
 				

@@ -60,10 +60,12 @@ inline void init(sys::state& state) noexcept {
 				auto nation_ppp_gdp_per_capita_text = text::format_float(economy::gdp_adjusted(state, nation.id) / population * 1000000.f);
 				auto nation_sol_text = text::format_float(demographics::calculate_nation_sol(state, nation.id));
 
+				json j = json::object();
+
+				auto reserve_rate = economy::national_bank_reserve_rate(state, nation);
+				auto total_assets = economy::national_bank_total_capital(state, nation);
 				auto national_bank = state.world.nation_get_national_bank(nation);
 				auto state_debt = nations::get_debt(state, nation);
-
-				json j = json::object();
 
 				j["id"] = nation.id.index();
 				j["name"] = nation_name;
@@ -72,8 +74,20 @@ inline void init(sys::state& state) noexcept {
 				j["nation_ppp_gdp_per_capita"] = nation_ppp_gdp_per_capita_text;
 				j["nation_sol"] = nation_sol_text;
 
-				j["national_bank"] = national_bank;
+				j["national_bank_total_assets"] = total_assets;
 				j["state_debt"] = state_debt;
+
+				j["bank_max_debt_financing_share"] = text::format_percentage(economy::national_bank_max_debt_financing_share(state, nation));
+				j["bank_private_borrowing"] = text::format_money(economy::national_bank_private_borrowing(state, nation));
+				j["bank_reserves"] = text::format_money(reserve_rate * total_assets);
+				j["bank_free_capital"] = economy::national_bank_free_capital(state, nation);
+				j["bank_assets_total"] = text::format_money(total_assets);
+				j["bank_interest_rate_total"] = text::format_percentage(economy::interest_rate(state, nation) * 30.f);
+				j["bank_instability_interest_premium"] = text::format_percentage(state.world.nation_get_instability_interest_premium(nation) / 100.f);
+				j["bank_added_minimal_interest"] = text::format_percentage(state.world.nation_get_added_minimal_interest(nation) / 100.f);
+
+				j["bank_state_deposit"] = text::format_money(state.world.nation_get_local_deposit(nation));
+				j["bank_pops_deposit"] = text::format_money(state.world.nation_get_national_bank(nation));
 
 				jlist.push_back(j);
 			}
