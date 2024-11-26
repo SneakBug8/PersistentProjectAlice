@@ -928,6 +928,22 @@ void get_desired_factory_types(sys::state& state, dcon::nation_id nid, dcon::mar
 				float output = economy::factory_type_output_cost(state, n, m, type);
 				float input = economy::factory_type_input_cost(state, n, m, type);
 
+#ifndef  NDEBUG
+				auto rvalue = rng::get_random(state, uint32_t(nid.value * 1000 + mid.value * 10000 + type.id.value));
+				if(rng::reduce(uint32_t(rvalue), 100) == 0) {
+					auto factory_name = text::produce_simple_string(state, type.get_name());
+
+					if(!lacking_input && (lacking_output || ((output - input) / cost < 365.f))) {
+						state.console_log("get_desired_factory_types;Will build;First pass;" + factory_name + ";Lacking_input;" + std::to_string(lacking_input) +
+						";Lacking_output;" + std::to_string(lacking_output) + ";Output-input;" + std::to_string(output - input) + ";Cost;" + std::to_string(cost));
+					} else {
+						state.console_log("get_desired_factory_types;Won't build;First pass;" + factory_name + ";Lacking_input;" + std::to_string(lacking_input) +
+						";Lacking_output;" + std::to_string(lacking_output) + ";Output-input;" + std::to_string(output - input) + ";Cost;" + std::to_string(cost));
+					}
+				}
+#endif // ! NDEBUG
+
+
 				if(!lacking_input && (lacking_output || ((output - input) / cost < 365.f)))
 					desired_types.push_back(type.id);
 			} // END if building unlocked
@@ -951,10 +967,28 @@ void get_desired_factory_types(sys::state& state, dcon::nation_id nid, dcon::mar
 					}
 				}
 
+				float cost = economy::factory_type_build_cost(state, n, m, type);
 				float output = economy::factory_type_output_cost(state, n, m, type);
 				float input = economy::factory_type_input_cost(state, n, m, type);
 
-				if(!lacking_input && (lacking_output || ((output - input) / input > 0.3f)))
+#ifndef  NDEBUG
+				auto rvalue = rng::get_random(state, uint32_t(nid.value * 1000 + mid.value * 10000 + type.id.value));
+				if(rng::reduce(uint32_t(rvalue), 100) == 0) {
+					auto factory_name = text::produce_simple_string(state, type.get_name());
+					if(!lacking_input && (lacking_output || ((output - input) / input > economy::interest_rate(state, n) * 2.0f))) {
+						state.console_log("get_desired_factory_types;Will build;First pass;" + factory_name + ";Lacking_input;" + std::to_string(lacking_input) +
+						";Lacking_output;" + std::to_string(lacking_output) + ";Output-input;" + std::to_string(output - input) + ";Cost;" + std::to_string(cost) +
+						";interest_rate*2;" + std::to_string(economy::interest_rate(state, n) * 2.0f));
+					} else {
+						state.console_log("get_desired_factory_types;Won't build;First pass;" + factory_name + ";Lacking_input;" + std::to_string(lacking_input) +
+						";Lacking_output;" + std::to_string(lacking_output) + ";Output-input;" + std::to_string(output - input) + ";Cost;" + std::to_string(cost) +
+						";interest_rate*2;" + std::to_string(economy::interest_rate(state, n) * 2.0f));
+					}
+				}
+#endif // ! NDEBUG
+
+
+				if(!lacking_input && (lacking_output || ((output - input) / input > economy::interest_rate(state, n) * 2.0f)))
 					desired_types.push_back(type.id);
 			} // END if building unlocked
 		}
@@ -3178,7 +3212,7 @@ void update_budget(sys::state& state) {
 			float investment_ratio = 100.f * math::sqrt(investment_budget / max_investment_budget);
 			investment_ratio = std::clamp(investment_ratio, 0.f, 100.f);
 			if(!n.get_is_at_war() && economy::national_bank_free_capital(state, n) <= investment_budget * 30.f) {
-			n.set_domestic_investment_spending(int8_t(investment_ratio));
+				n.set_domestic_investment_spending(int8_t(investment_ratio));
 			}
 			else if (n.get_is_at_war()) {
 				n.set_domestic_investment_spending(int8_t(-investment_ratio));
