@@ -2687,12 +2687,17 @@ bool can_state_transfer(sys::state& state, dcon::nation_id asker, dcon::nation_i
 	//	return false;
 	if(state.current_crisis_state != sys::crisis_state::inactive)
 		return false;
-	auto ol = state.world.nation_get_overlord_as_subject(asker);
-	if(state.world.overlord_get_ruler(ol))
-		return false;
-	//auto ol2 = state.world.nation_get_overlord_as_subject(target);
-	//if(state.world.overlord_get_ruler(ol2))
-	//	return false;
+
+	if(state.defines.alice_state_transfer_limits) {
+		// Transfers only to/from subjects
+		auto ol = state.world.nation_get_overlord_as_subject(asker);
+		if(state.world.overlord_get_ruler(ol) && state.world.overlord_get_ruler(ol) != target)
+			return false;
+		auto ol2 = state.world.nation_get_overlord_as_subject(target);
+		if(state.world.overlord_get_ruler(ol2) && state.world.overlord_get_ruler(ol2) != asker)
+			return false;
+	}
+	
 	if(state.world.nation_get_is_at_war(asker) || state.world.nation_get_is_at_war(target))
 		return false;
 	//Redundant, if we're at war already, we will return false:
@@ -5329,8 +5334,17 @@ void execute_notify_player_oos(sys::state& state, dcon::nation_id source) {
 #endif
 
 	if(state.network_mode == sys::network_mode_type::host) {
-		// Send new save to all clients
-		network::full_reset_after_oos(state);
+		if(!state.host_settings.alice_persistent_server_mode) {
+			// Send new save to all clients
+			network::full_reset_after_oos(state);
+		}
+		else {
+			for(auto& client : state.network_state.clients) {
+				if(client.is_active() && client.playing_as == source) {
+					network::kick_player(state, client);
+				}
+			}
+		}
 	}
 }
 

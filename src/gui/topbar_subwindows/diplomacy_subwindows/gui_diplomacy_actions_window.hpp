@@ -1926,8 +1926,19 @@ public:
 		text::add_line(state, contents, "state_transfer_desc");
 		text::add_line_break_to_layout(state, contents);
 
+		if(state.defines.alice_state_transfer_limits) {
+			// Transfers only to/from subjects
+			auto ol = state.world.nation_get_overlord_as_subject(source);
+			auto ol2 = state.world.nation_get_overlord_as_subject(target);
+
+			auto target_is_overlord = state.world.overlord_get_ruler(ol) && state.world.overlord_get_ruler(ol) == target;
+			auto source_is_overlord = state.world.overlord_get_ruler(ol2) && state.world.overlord_get_ruler(ol) == source;
+
+			text::add_line_with_condition(state, contents, "state_transfer_explain_3", target_is_overlord || source_is_overlord);
+			// text::add_line_with_condition(state, contents, "state_transfer_explain_4", source_is_overlord);
+		}
+		// text::add_line_with_condition(state, contents, "state_transfer_explain_1", state.world.nation_get_is_player_controlled(target));
 		text::add_line_with_condition(state, contents, "state_transfer_explain_2", state.current_crisis_state == sys::crisis_state::inactive);
-		text::add_line_with_condition(state, contents, "state_transfer_explain_3", !state.world.overlord_get_ruler(state.world.nation_get_overlord_as_subject(source)));
 		text::add_line_with_condition(state, contents, "state_transfer_explain_5", !(state.world.nation_get_is_at_war(source) || state.world.nation_get_is_at_war(target)));
 		text::add_line_with_condition(state, contents, "state_transfer_explain_6", state.world.nation_get_owned_state_count(source) > 1);
 	}

@@ -746,7 +746,7 @@ state_transfer_offer;$actor$ is offering to give us the states of:
 state_transfer_desc;Transfers the ownership of one state to another nation, useful for negotiations beyond the game's scope
 state_transfer_explain_1;The target nation is a player
 state_transfer_explain_2;There isn't any crisis currently
-state_transfer_explain_3;We're not subjects
+state_transfer_explain_3;We arre in a subject relation
 state_transfer_explain_4;They're not subjects
 state_transfer_explain_5;We're at peace
 state_transfer_explain_6;We have more than 1 state

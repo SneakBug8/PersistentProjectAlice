@@ -521,6 +521,7 @@ static void disconnect_client(sys::state& state, client_data& client, bool grace
 	state.console_log("server:disconnectclient | country:" + std::to_string(client.playing_as.index()));
 	log_player_nations(state);
 #endif
+	socket_shutdown(client.socket_fd);
 	clear_socket(state, client);
 }
 
@@ -1381,6 +1382,9 @@ void send_and_receive_commands(sys::state& state) {
 
 	bool command_executed = false;
 	if(state.network_mode == sys::network_mode_type::host) {
+		if(state.host_settings.alice_persistent_server_mode) {
+			persistent_every_cycle_checks(state);
+		}
 		accept_new_clients(state); // accept new connections
 		receive_from_clients(state); // receive new commands
 
@@ -1626,17 +1630,15 @@ void remove_player(sys::state& state, sys::player_name name) {
 }
 
 void kick_player(sys::state& state, client_data& client) {
-	socket_shutdown(client.socket_fd);
-
-	clear_socket(state, client);
+	disconnect_client(state, client, state.host_settings.alice_place_ai_upon_disconnection);
 }
 
 void ban_player(sys::state& state, client_data& client) {
-	socket_shutdown(client.socket_fd);
+	auto nickname = client.hshake_buffer.nickname;
 
-	remove_player(state, client.hshake_buffer.nickname);
+	disconnect_client(state, client, state.host_settings.alice_place_ai_upon_disconnection);
 
-	clear_socket(state, client);
+	remove_player(state, nickname);
 
 	if(state.network_state.as_v6) {
 		auto sa = (struct sockaddr_in6*)&client.address;

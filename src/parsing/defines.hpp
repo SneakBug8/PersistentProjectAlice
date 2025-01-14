@@ -704,6 +704,8 @@
 	LUA_DEFINES_LIST_ELEMENT(alice_ai_strength_estimation_military_industrial_balance, 1.0) \
 	LUA_DEFINES_LIST_ELEMENT(alice_factory_refit_cost_modifier, 0.1) \
 	LUA_DEFINES_LIST_ELEMENT(alice_free_trade_agreement_years, 5.0) \
+	LUA_DEFINES_LIST_ELEMENT(alice_state_transfer_limits, 0.0) \
+
 
 // scales the needs values so that they are needs per this many pops
 // this value was arrived at by looking at farmers: 40'000 farmers produces enough grain to satisfy about 2/3

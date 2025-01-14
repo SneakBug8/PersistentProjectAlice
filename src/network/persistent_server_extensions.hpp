@@ -96,7 +96,7 @@ inline void write_player_nations(sys::state& state) noexcept {
 	simple_fs::write_file(folder, NATIVE("players.csv"), res.data(), uint32_t(res.length()));
 }
 
-inline void every_tick_checks(sys::state& state) noexcept {
+inline void persistent_every_cycle_checks(sys::state& state) noexcept {
 	if(state.network_mode != sys::network_mode_type::host || state.host_settings.alice_persistent_server_mode != 1) {
 		return;
 	}
