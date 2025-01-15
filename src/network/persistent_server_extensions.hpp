@@ -41,10 +41,10 @@ inline void read_player_nations(sys::state& state, char const* start, char const
 					auto password_hash = sys::player_password_hash{ }.from_string_view(third_text);
 					auto password_salt = sys::player_password_salt{ }.from_string_view(fourth_text);
 
-					auto p = load_mp_player(state, name, password_hash, password_salt);
+					auto& p = load_mp_player(state, name, password_hash, password_salt);
+					p.nation = source;
 
 					state.world.nation_set_is_player_controlled(source, true);
-					state.world.force_create_player_nation(source, p);
 
 					ui::chat_message m{};
 					m.source = source;
@@ -84,12 +84,9 @@ inline void write_player_nations(sys::state& state) noexcept {
 
 	std::string res = "Nickname;NationID;PasswordHash;PasswordSalt\n";
 
-	for(auto pl : state.world.in_mp_player) {
-		auto nickname = sys::player_name{ pl.get_nickname() };
-		auto password_hash = sys::player_password_hash{ pl.get_password_hash() };
-		auto password_salt = sys::player_password_salt{ pl.get_password_salt() };
-		res += nickname.to_string() + ";" + std::to_string(pl.get_nation_from_player_nation().id.index()) + ";"
-			+ password_hash.to_string() + ";" + password_salt.to_string() + "\n";
+	for(auto& pl : state.network_state.players) {
+		res += pl.nickname.to_string() + ";" + std::to_string(pl.nation.index()) + ";"
+			+ pl.password_hash.to_string() + ";" + pl.password_salt.to_string() + "\n";
 	}
 	auto folder = simple_fs::get_or_create_data_dumps_directory();
 

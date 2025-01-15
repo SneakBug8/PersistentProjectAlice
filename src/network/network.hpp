@@ -71,6 +71,27 @@ struct client_data {
 	}
 };
 
+inline const int MAXPLAYERSCOUNT = 128;
+
+struct mp_player {
+	sys::player_name nickname;
+	sys::player_password_salt password_salt;
+	sys::player_password_hash password_hash;
+	sys::player_password_raw password_raw;
+
+	dcon::nation_id nation;
+
+	constexpr bool operator==(mp_player v) const noexcept {
+		return nickname.data == v.nickname.data;
+	}
+	constexpr bool operator!=(mp_player v) const noexcept {
+		return nickname.data != v.nickname.data;
+	}
+	explicit constexpr operator bool() const noexcept {
+		return (bool) nation;
+	}
+};
+
 struct network_state {
 	server_handshake_data s_hshake;
 	sys::player_name nickname;
@@ -78,7 +99,8 @@ struct network_state {
 	sys::checksum_key current_save_checksum;
 	struct sockaddr_storage address;
 	rigtorp::SPSCQueue<command::payload> outgoing_commands;
-	std::array<client_data, 128> clients;
+	std::array<client_data, MAXPLAYERSCOUNT> clients;
+	std::array<mp_player, MAXPLAYERSCOUNT> players;
 	std::vector<struct in6_addr> v6_banlist;
 	std::vector<struct in_addr> v4_banlist;
 	std::string ip_address = "127.0.0.1";
@@ -118,11 +140,11 @@ void broadcast_to_clients(sys::state& state, command::payload& c);
 void clear_socket(sys::state& state, client_data& client);
 void full_reset_after_oos(sys::state& state);
 
-dcon::mp_player_id create_mp_player(sys::state& state, sys::player_name& name, sys::player_password_raw& password);
-dcon::mp_player_id load_mp_player(sys::state& state, sys::player_name& name, sys::player_password_hash& password_hash, sys::player_password_salt& password_salt);
-void update_mp_player_password(sys::state& state, dcon::mp_player_id player_id, sys::player_name& password);
-dcon::mp_player_id find_mp_player(sys::state& state, sys::player_name name);
-dcon::mp_player_id find_country_player(sys::state& state, dcon::nation_id nation);
+mp_player& create_mp_player(sys::state& state, sys::player_name& name, sys::player_password_raw& password);
+mp_player& load_mp_player(sys::state& state, sys::player_name& name, sys::player_password_hash& password_hash, sys::player_password_salt& password_salt);
+void update_mp_player_password(sys::state& state, mp_player& player_id, sys::player_name& password);
+mp_player& find_mp_player(sys::state& state, sys::player_name& name);
+mp_player& find_country_player(sys::state& state, dcon::nation_id nation);
 void log_player_nations(sys::state& state);
 
 void place_host_player_after_saveload(sys::state& state);

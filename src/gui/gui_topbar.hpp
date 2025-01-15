@@ -954,16 +954,14 @@ public:
 	}
 	void update_tooltip(sys::state& state, int32_t x, int32_t y, text::columnar_layout& contents) noexcept override {
 		if(state.network_mode == sys::network_mode_type::host) {
-			for(auto pl : state.network_state.clients) {
+			for(auto& pl : state.network_state.clients) {
 				if(!pl.is_active()) {
 					continue;
 				}
 				text::substitution_map sub{};
 
-				auto mppl = dcon::fatten(state.world, network::find_country_player(state, pl.playing_as));
-				auto pln = sys::player_name{ mppl.get_nickname() };
-
-				text::add_to_substitution_map(sub, text::variable_type::name, pln.to_string_view());
+				auto& mppl = network::find_country_player(state, pl.playing_as);
+				text::add_to_substitution_map(sub, text::variable_type::name, mppl.nickname.to_string_view());
 				text::add_to_substitution_map(sub, text::variable_type::country, pl.playing_as);
 				text::add_to_substitution_map(sub, text::variable_type::date, pl.last_seen);
 

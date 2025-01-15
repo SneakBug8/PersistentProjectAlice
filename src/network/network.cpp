@@ -531,12 +531,8 @@ void log_player_nations(sys::state& state) {
 		if(state.world.nation_get_is_player_controlled(n))
 			state.console_log("player controlled: " + std::to_string(n.id.index()));
 
-	for(const auto p : state.world.in_mp_player) {
-		auto data = p.get_nickname();
-		auto nickname = sys::player_name{ data };
-		auto nation = p.get_player_nation().get_nation();
-
-		state.console_log("player id: " + std::to_string(p.id.index()) + " nickname: " + nickname.to_string() + " nation:" + std::to_string(nation.id.index()));
+	for(auto p : state.network_state.players) {
+		state.console_log("player nickname: " + p.nickname.to_string() + " nation:" + std::to_string(p.nation.index()));
 	}
 }
 
@@ -660,56 +656,92 @@ static std::map<int, std::string> readableCommandTypes = {
 {255,"console_command"},
 };
 
-dcon::mp_player_id create_mp_player(sys::state& state, sys::player_name& name, sys::player_password_raw& password) {
-	auto p = state.world.create_mp_player();
-	state.world.mp_player_set_nickname(p, name.data);
+mp_player& create_mp_player(sys::state& state, sys::player_name& name, sys::player_password_raw& password) {
 
+	for(int i = 0; i < MAXPLAYERSCOUNT; i++) {
+		if(!state.network_state.players[i]) {
+			auto p = mp_player{ };
+			p.nickname = name;
+
+			auto salt = sys::player_password_salt{}.from_string_view(std::to_string(int32_t(rand())));
+			auto hash = sys::player_password_hash{}.from_string_view(sha512.hash(password.to_string() + salt.to_string()));
+			p.password_hash = hash;
+			p.password_salt = salt;
+
+			state.network_state.players[i] = p;
+			return state.network_state.players[i];
+		}
+	}
+
+	return state.network_state.players[0];
+}
+
+mp_player& load_mp_player(sys::state& state, sys::player_name& name, sys::player_password_hash& password_hash, sys::player_password_salt& password_salt) {
+
+	for(int i = 0; i < MAXPLAYERSCOUNT; i++) {
+		if(!state.network_state.players[i]) {
+			auto p = mp_player{ };
+			p.nickname = name;
+			p.password_hash = password_hash;
+			p.password_salt = password_salt;
+
+			state.network_state.players[i] = p;
+			return state.network_state.players[i];
+		}
+	}
+
+	return state.network_state.players[0];
+}
+
+void update_mp_player_password(sys::state& state, mp_player& player, sys::player_password_raw& password) {
 	auto salt = sys::player_password_salt{}.from_string_view(std::to_string(int32_t(rand())));
 	auto hash = sys::player_password_hash{}.from_string_view(sha512.hash(password.to_string() + salt.to_string()));
-	state.world.mp_player_set_password_hash(p, hash.data);
-	state.world.mp_player_set_password_salt(p, salt.data);
 
-	return p;
+	player.password_hash = hash;
+	player.password_salt = salt;
 }
 
-dcon::mp_player_id load_mp_player(sys::state& state, sys::player_name& name, sys::player_password_hash& password_hash, sys::player_password_salt& password_salt) {
-	auto p = state.world.create_mp_player();
-	state.world.mp_player_set_nickname(p, name.data);
-	state.world.mp_player_set_password_hash(p, password_hash.data);
-	state.world.mp_player_set_password_salt(p, password_salt.data);
-
-	return p;
-}
-
-void update_mp_player_password(sys::state& state, dcon::mp_player_id player_id, sys::player_password_raw& password) {
-	auto salt = sys::player_password_salt{}.from_string_view(std::to_string(int32_t(rand())));
-	auto hash = sys::player_password_hash{}.from_string_view(sha512.hash(password.to_string() + salt.to_string()));
-	state.world.mp_player_set_password_hash(player_id, hash.data);
-	state.world.mp_player_set_password_salt(player_id, salt.data);
-}
-
-dcon::mp_player_id find_mp_player(sys::state& state, sys::player_name name) {
-	for(const auto p : state.world.in_mp_player) {
-		auto nickname = p.get_nickname();
-
-		if(std::equal(std::begin(nickname), std::end(nickname), std::begin(name.data))) {
+mp_player& find_mp_player(sys::state& state, sys::player_name& name) {
+	for(auto& p : state.network_state.players) {
+		if(p.nickname.data == name.data) {
 			return p;
 		}
 	}
 
-	return dcon::mp_player_id{};
+	return state.network_state.players[0];
 }
 
-dcon::mp_player_id find_country_player(sys::state& state, dcon::nation_id nation) {
-	return state.world.nation_get_mp_player_from_player_nation(nation);
+mp_player& find_country_player(sys::state& state, dcon::nation_id nation) {
+	for(auto& p : state.network_state.players) {
+		if(p.nation == nation) {
+			return p;
+		}
+	}
+
+	return state.network_state.players[0];
+}
+
+void remove_player(sys::state& state, sys::player_name name) {
+
+	for(int i = 0; i < MAXPLAYERSCOUNT; i++) {
+		if(state.network_state.players[i]) {
+			if(state.network_state.players[i].nickname == name) {
+				auto& n = state.network_state.players[i].nation;
+				if(n) {
+					state.world.nation_set_is_player_controlled(n, false);
+				}
+				state.network_state.players[i] = state.network_state.players[0];
+			}
+		}
+	}
 }
 
 // Reassign player to his previous nation if any
-static dcon::nation_id get_player_nation(sys::state& state, sys::player_name name) {
+static dcon::nation_id get_player_nation(sys::state& state, sys::player_name& name) {
 
-	auto p = find_mp_player(state, name);
-	if(p) {
-		return state.world.mp_player_get_nation_from_player_nation(p);
+	auto& p = find_mp_player(state, name);
+	if(p.nation) {
+		p.nation;
 	}
 
 	return dcon::nation_id{ };
@@ -903,7 +935,7 @@ void notify_player_joins(sys::state& state, sys::player_name name, dcon::nation_
 	c.data.notify_join.player_name = name;
 	c.data.notify_join.player_password = password;
 
-	for(auto cl : state.network_state.clients) {
+	for(auto& cl : state.network_state.clients) {
 		if(!cl.is_active() || cl.playing_as == nation) {
 			continue;
 		}
@@ -929,9 +961,8 @@ void notify_player_joins_discovery(sys::state& state, network::client_data& clie
 			memset(&c, 0, sizeof(c));
 			c.type = command::command_type::notify_player_joins;
 			c.source = n;
-			auto p = find_country_player(state, n);
-			auto nickname = state.world.mp_player_get_nickname(p);
-			c.data.notify_join.player_name = sys::player_name{ nickname };
+			auto& p = find_country_player(state, n);
+			c.data.notify_join.player_name = p.nickname;
 			socket_add_to_send_queue(client.send_buffer, &c, sizeof(c));
 #ifndef NDEBUG
 			state.console_log("host:send:cmd | type:notify_player_joins | to:" + std::to_string(client.playing_as.index()) + " | target nation:" + std::to_string(n.id.index())
@@ -1146,27 +1177,25 @@ int server_process_handshake(sys::state& state, network::client_data& client) {
 				continue;
 			}
 
-			if(c.hshake_buffer.nickname.to_string_view() == client.hshake_buffer.nickname.to_string_view() && c.socket_fd != client.socket_fd) {
+			if(c.hshake_buffer.nickname == client.hshake_buffer.nickname && c.socket_fd != client.socket_fd) {
 				disconnect_client(state, client, false);
 				return;
 			}
 		}
 
 		// Check player password
-		for(auto pl : state.world.in_mp_player) {
-			auto nickname_1 = sys::player_name{ pl.get_nickname() }.to_string();
-			auto nickname_2 = client.hshake_buffer.nickname.to_string();
-			auto hash_1 = sys::player_password_hash{ pl.get_password_hash() };
-			auto password_2 = client.hshake_buffer.player_password.to_string();
-			auto salt = sys::player_password_salt{ pl.get_password_salt() }.to_string();
-			auto hash_2 = sys::player_password_hash{}.from_string_view(sha512.hash(password_2 + salt));
+		for(auto pl : state.network_state.players) {
+			auto nickname_2 = client.hshake_buffer.nickname;
+			auto password_2 = client.hshake_buffer.player_password;
+			auto salt = pl.password_salt;
+			auto hash_2 = sys::player_password_hash{}.from_string_view(sha512.hash(password_2.to_string() + salt.to_string()));
 
 			// If no password is set we allow player to set new password with this connection
-			if(nickname_1 == nickname_2 && !hash_1.empty() && hash_1.to_string() != hash_2.to_string()) {
+			if(pl.nickname == nickname_2 && !pl.password_hash.empty() && pl.password_hash.to_string() != hash_2.to_string()) {
 				disconnect_client(state, client, false);
 				return;
 			}
-			else if(nickname_1 == nickname_2) {
+			else if(pl.nickname == nickname_2) {
 				break;
 			}
 		}
@@ -1614,21 +1643,6 @@ void finish(sys::state& state, bool notify_host) {
 #endif
 }
 
-void remove_player(sys::state& state, sys::player_name name) {
-	auto p = find_mp_player(state, name);
-	if(p) {
-
-		auto c = state.world.mp_player_get_nation_from_player_nation(p);
-
-		if(c) {
-			state.world.nation_set_is_player_controlled(c, false);
-		}
-		auto rel = state.world.mp_player_get_player_nation(p);
-		state.world.delete_player_nation(rel);
-		state.world.delete_mp_player(p);
-	}
-}
-
 void kick_player(sys::state& state, client_data& client) {
 	disconnect_client(state, client, state.host_settings.alice_place_ai_upon_disconnection);
 }
@@ -1650,8 +1664,8 @@ void ban_player(sys::state& state, client_data& client) {
 }
 
 void switch_player(sys::state& state, dcon::nation_id new_n, dcon::nation_id old_n) {
-	auto p = find_country_player(state, old_n);
-	state.world.force_create_player_nation(new_n, p);
+	auto& p = find_country_player(state, old_n);
+	p.nation = new_n;
 
 	if(state.network_mode == sys::network_mode_type::host) {
 		for(auto& client : state.network_state.clients) {

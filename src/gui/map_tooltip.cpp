@@ -1182,9 +1182,8 @@ void players_map_tt_box(sys::state& state, text::columnar_layout& contents, dcon
 			auto box = text::open_layout_box(contents);
 			text::substitution_map sub;
 
-			auto p = network::find_country_player(state, n);
-			auto nickname = state.world.mp_player_get_nickname(p);
-			text::add_to_substitution_map(sub, text::variable_type::x, sys::player_name{nickname }.to_string_view());
+			auto& p = network::find_country_player(state, n);
+			text::add_to_substitution_map(sub, text::variable_type::x, p.nickname.to_string_view());
 			if(n == state.local_player_nation) {
 				if(state.network_mode == sys::network_mode_type::single_player) {
 					text::localised_format_box(state, contents, box, std::string_view("mapmode_tooltip_34_you_sp"), sub);

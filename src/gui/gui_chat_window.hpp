@@ -25,10 +25,8 @@ public:
 				false });
 
 
-		auto p = network::find_country_player(state, content.source);
-		auto nickname = state.world.mp_player_get_nickname(p);
-
-		std::string sender_name = sys::player_name{nickname }.to_string() + ": ";
+		auto& p = network::find_country_player(state, content.source);
+		std::string sender_name = p.nickname.to_string() + ": ";
 		std::string text_form_msg = std::string(content.body);
 		auto box = text::open_layout_box(container);
 		text::add_to_layout_box(state, container, box, sender_name, IsShadow ? text::text_color::black : text::text_color::orange);
@@ -170,9 +168,8 @@ public:
 		} else {
 			auto n = retrieve<dcon::nation_id>(state, parent);
 
-			auto p = network::find_country_player(state, n);
-			auto nickname = state.world.mp_player_get_nickname(p);
-			set_text(state, sys::player_name{nickname }.to_string());
+			auto& p = network::find_country_player(state, n);
+			set_text(state, p.nickname.to_string());
 		}
 	}
 };

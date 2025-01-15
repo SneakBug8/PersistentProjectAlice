@@ -329,6 +329,16 @@ struct player_value {
 		}
 		return ' ';
 	}
+
+	constexpr bool operator==(player_value<_Size> v) const noexcept {
+		return data == data;
+	}
+	constexpr bool operator!=(player_value<_Size> v) const noexcept {
+		return data != data;
+	}
+	explicit constexpr operator bool() const noexcept {
+		return !empty();
+	}
 };
 
 using player_name = player_value<24>;

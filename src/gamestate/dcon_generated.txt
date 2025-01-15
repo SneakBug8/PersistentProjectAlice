@@ -5392,39 +5392,6 @@ object {
 	}
 }
 
-object{
-	name{ mp_player }
-	storage_type{ erasable }
-	size{ 200 }
-
-	property{
-		name{ nickname }
-		type{ std::array<uint8_t,24> }
-	}
-	property{
-		name{ password_salt }
-		type{ std::array<uint8_t,24> }
-	}
-	property{
-		name{ password_hash }
-		type{ std::array<uint8_t,64> }
-	}
-}
-
-relationship{
-	name{ player_nation }
-	link{
-		object{nation}
-		name{nation}
-		type{unique}
-	}
-	link{
-		object{mp_player}
-		name{mp_player}
-		type{unique}
-	}
-}
-
 load_save{
 	name{store_scenario}
 	only_objects{scenario}
