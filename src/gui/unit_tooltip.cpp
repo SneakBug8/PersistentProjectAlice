@@ -8,15 +8,16 @@ unitamounts calc_amounts_from_army(sys::state& state, dcon::army_fat_id army) {
 	unitamounts amounts;
 	for(auto n : army.get_army_membership()) {
 		dcon::unit_type_id utid = n.get_regiment().get_type();
-		auto result = state.military_definitions.unit_base_definitions[utid].type;
-		if(result == military::unit_type::infantry) {
-			amounts.type1++;
-		} else
-		if(result == military::unit_type::cavalry) {
-			amounts.type2++;
-		} else
-		if(result == military::unit_type::support || result == military::unit_type::special) {
-			amounts.type3++;
+		if(utid) {
+			auto result = state.military_definitions.unit_base_definitions[utid].type;
+			if(result == military::unit_type::infantry) {
+				amounts.type1++;
+			}
+			else if(result == military::unit_type::cavalry) {
+				amounts.type2++;
+			} else if(result == military::unit_type::support || result == military::unit_type::special) {
+				amounts.type3++;
+			}
 		}
 	}
 	return amounts;
