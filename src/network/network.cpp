@@ -531,7 +531,10 @@ void log_player_nations(sys::state& state) {
 		if(state.world.nation_get_is_player_controlled(n))
 			state.console_log("player controlled: " + std::to_string(n.id.index()));
 
-	for(auto p : state.network_state.players) {
+	for(auto& p : state.network_state.players) {
+		if(!p) {
+			continue;
+		}
 		state.console_log("player nickname: " + p.nickname.to_string() + " nation:" + std::to_string(p.nation.index()));
 	}
 }
@@ -657,7 +660,6 @@ static std::map<int, std::string> readableCommandTypes = {
 };
 
 mp_player& create_mp_player(sys::state& state, sys::player_name& name, sys::player_password_raw& password) {
-
 	for(int i = 0; i < MAXPLAYERSCOUNT; i++) {
 		if(!state.network_state.players[i]) {
 			auto p = mp_player{ };
@@ -673,11 +675,10 @@ mp_player& create_mp_player(sys::state& state, sys::player_name& name, sys::play
 		}
 	}
 
-	return state.network_state.players[0];
+	return state.network_state.empty_player;
 }
 
 mp_player& load_mp_player(sys::state& state, sys::player_name& name, sys::player_password_hash& password_hash, sys::player_password_salt& password_salt) {
-
 	for(int i = 0; i < MAXPLAYERSCOUNT; i++) {
 		if(!state.network_state.players[i]) {
 			auto p = mp_player{ };
@@ -690,7 +691,7 @@ mp_player& load_mp_player(sys::state& state, sys::player_name& name, sys::player
 		}
 	}
 
-	return state.network_state.players[0];
+	return state.network_state.empty_player;
 }
 
 void update_mp_player_password(sys::state& state, mp_player& player, sys::player_password_raw& password) {
@@ -703,26 +704,31 @@ void update_mp_player_password(sys::state& state, mp_player& player, sys::player
 
 mp_player& find_mp_player(sys::state& state, sys::player_name& name) {
 	for(auto& p : state.network_state.players) {
-		if(p.nickname.data == name.data) {
+		if(!p) {
+			continue;
+		}
+		if(p.nickname == name) {
 			return p;
 		}
 	}
 
-	return state.network_state.players[0];
+	return state.network_state.empty_player;
 }
 
 mp_player& find_country_player(sys::state& state, dcon::nation_id nation) {
 	for(auto& p : state.network_state.players) {
+		if(!p) {
+			continue;
+		}
 		if(p.nation == nation) {
 			return p;
 		}
 	}
 
-	return state.network_state.players[0];
+	return state.network_state.empty_player;
 }
 
 void remove_player(sys::state& state, sys::player_name name) {
-
 	for(int i = 0; i < MAXPLAYERSCOUNT; i++) {
 		if(state.network_state.players[i]) {
 			if(state.network_state.players[i].nickname == name) {
@@ -730,7 +736,7 @@ void remove_player(sys::state& state, sys::player_name name) {
 				if(n) {
 					state.world.nation_set_is_player_controlled(n, false);
 				}
-				state.network_state.players[i] = state.network_state.players[0];
+				state.network_state.players[i] = state.network_state.empty_player;
 			}
 		}
 	}
@@ -934,7 +940,7 @@ void notify_player_joins(sys::state& state, sys::player_name name, dcon::nation_
 	c.source = nation;
 	c.data.notify_join.player_name = name;
 	c.data.notify_join.player_password = password;
-
+	
 	for(auto& cl : state.network_state.clients) {
 		if(!cl.is_active() || cl.playing_as == nation) {
 			continue;

@@ -85,6 +85,9 @@ inline void write_player_nations(sys::state& state) noexcept {
 	std::string res = "Nickname;NationID;PasswordHash;PasswordSalt\n";
 
 	for(auto& pl : state.network_state.players) {
+		if(!pl) {
+			continue;
+		}
 		res += pl.nickname.to_string() + ";" + std::to_string(pl.nation.index()) + ";"
 			+ pl.password_hash.to_string() + ";" + pl.password_salt.to_string() + "\n";
 	}

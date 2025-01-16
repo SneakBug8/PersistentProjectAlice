@@ -331,10 +331,15 @@ struct player_value {
 	}
 
 	constexpr bool operator==(player_value<_Size> v) const noexcept {
-		return data == data;
+		for(uint32_t i = 0; i < sizeof(data); i++) {
+			if(data[i] != v.data[i]) {
+				return false;
+			}
+		}
+		return true;
 	}
 	constexpr bool operator!=(player_value<_Size> v) const noexcept {
-		return data != data;
+		return !(this == v);
 	}
 	explicit constexpr operator bool() const noexcept {
 		return !empty();

@@ -87,7 +87,7 @@ struct mp_player {
 	constexpr bool operator!=(mp_player v) const noexcept {
 		return nickname.data != v.nickname.data;
 	}
-	explicit constexpr operator bool() const noexcept {
+	constexpr operator bool() const noexcept {
 		return (bool) nation;
 	}
 };
@@ -101,6 +101,9 @@ struct network_state {
 	rigtorp::SPSCQueue<command::payload> outgoing_commands;
 	std::array<client_data, MAXPLAYERSCOUNT> clients;
 	std::array<mp_player, MAXPLAYERSCOUNT> players;
+
+	mp_player empty_player;
+
 	std::vector<struct in6_addr> v6_banlist;
 	std::vector<struct in_addr> v4_banlist;
 	std::string ip_address = "127.0.0.1";
