@@ -13,6 +13,7 @@
 #include "date_interface.cpp"
 #include "serialization.cpp"
 #include "nations.cpp"
+#include "diplomacy.cpp"
 #include "culture.cpp"
 #include "military.cpp"
 #include "modifiers.cpp"
