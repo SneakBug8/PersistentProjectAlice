@@ -833,9 +833,33 @@ public:
 class nation_player_relations_text : public standard_nation_text {
 public:
 	std::string get_text(sys::state& state, dcon::nation_id nation_id) noexcept override {
-		auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(nation_id, state.local_player_nation);
-		auto fat_rel = dcon::fatten(state.world, rel);
-		return std::to_string(int32_t(fat_rel.get_value()));
+		auto rel_1 = state.world.get_unilateral_relationship_by_unilateral_pair(state.local_player_nation, nation_id);
+		auto rel_2 = state.world.get_unilateral_relationship_by_unilateral_pair(nation_id, state.local_player_nation);
+
+		auto fat_rel_1 = dcon::fatten(state.world, rel_1);
+		auto fat_rel_2 = dcon::fatten(state.world, rel_2);
+
+		return std::to_string(int32_t(fat_rel_1.get_opinion())) + " / " + std::to_string(int32_t(fat_rel_2.get_opinion()));
+	}
+
+	tooltip_behavior has_tooltip(sys::state& state) noexcept override {
+		return tooltip_behavior::variable_tooltip;
+	}
+
+	void update_tooltip(sys::state& state, int32_t x, int32_t y, text::columnar_layout& contents) noexcept override {
+		auto nation_id = retrieve<dcon::nation_id>(state, parent);
+
+		// ; They owe us ? Y$x$ ? W opinion points
+		// we_opinion; We owe them ? Y$x$ ? W opinion points
+
+		auto rel_1 = state.world.get_unilateral_relationship_by_unilateral_pair(state.local_player_nation, nation_id);
+		auto rel_2 = state.world.get_unilateral_relationship_by_unilateral_pair(nation_id, state.local_player_nation);
+
+		auto fat_rel_1 = dcon::fatten(state.world, rel_1);
+		auto fat_rel_2 = dcon::fatten(state.world, rel_2);
+
+		text::add_line(state, contents, "they_opinion", text::variable_type::x, text::int_wholenum{ (int) fat_rel_1.get_opinion() });
+		text::add_line(state, contents, "we_opinion", text::variable_type::x, text::int_wholenum{ (int) fat_rel_2.get_opinion() });
 	}
 };
 

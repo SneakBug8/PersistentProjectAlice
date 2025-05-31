@@ -339,7 +339,8 @@ void get_active_political_parties(sys::state& state, dcon::nation_id n, std::vec
 void update_monthly_points(sys::state& state);
 
 // may create a relationship DO NOT call in a context where two or more such functions may run in parallel
-void adjust_relationship(sys::state& state, dcon::nation_id a, dcon::nation_id b, float delta);
+// Makes FROM more indebted towards TO
+void adjust_relationship(sys::state& state, dcon::nation_id from, dcon::nation_id to, float delta);
 // used for creating a "new" nation when it is released
 void create_nation_based_on_template(sys::state& state, dcon::nation_id n, dcon::nation_id base);
 // call after a nation loses its last province

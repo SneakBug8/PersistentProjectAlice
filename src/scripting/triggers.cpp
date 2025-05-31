@@ -5263,8 +5263,8 @@ TRIGGER_FUNCTION(tf_relation_tag) {
 	auto holder = ws.world.national_identity_get_nation_from_identity_holder(payload(tval[2]).tag_id);
 	auto relation = ve::apply(
 			[&ws, holder](dcon::nation_id a) {
-				auto rel = ws.world.get_diplomatic_relation_by_diplomatic_pair(a, holder);
-				return ws.world.diplomatic_relation_get_value(rel);
+				auto rel = ws.world.get_unilateral_relationship_by_unilateral_pair(a, holder);
+				return ws.world.unilateral_relationship_get_opinion(rel);
 			},
 			to_nation(primary_slot));
 	return compare_values(tval[0], relation, float(payload(tval[1]).signed_value));
@@ -5272,8 +5272,8 @@ TRIGGER_FUNCTION(tf_relation_tag) {
 TRIGGER_FUNCTION(tf_relation_this_nation) {
 	auto relation = ve::apply(
 			[&ws](dcon::nation_id a, dcon::nation_id b) {
-				auto rel = ws.world.get_diplomatic_relation_by_diplomatic_pair(a, b);
-				return ws.world.diplomatic_relation_get_value(rel);
+				auto rel = ws.world.get_unilateral_relationship_by_unilateral_pair(a, b);
+				return ws.world.unilateral_relationship_get_opinion(rel);
 			},
 			to_nation(primary_slot), to_nation(this_slot));
 	return compare_values(tval[0], relation, float(payload(tval[1]).signed_value));
@@ -5282,8 +5282,8 @@ TRIGGER_FUNCTION(tf_relation_this_province) {
 	auto owner = ws.world.province_get_nation_from_province_ownership(to_prov(this_slot));
 	auto relation = ve::apply(
 			[&ws](dcon::nation_id a, dcon::nation_id b) {
-				auto rel = ws.world.get_diplomatic_relation_by_diplomatic_pair(a, b);
-				return ws.world.diplomatic_relation_get_value(rel);
+				auto rel = ws.world.get_unilateral_relationship_by_unilateral_pair(a, b);
+				return ws.world.unilateral_relationship_get_opinion(rel);
 			},
 			to_nation(primary_slot), owner);
 	return compare_values(tval[0], relation, float(payload(tval[1]).signed_value));
@@ -5292,8 +5292,8 @@ TRIGGER_FUNCTION(tf_relation_this_pop) {
 	auto owner = nations::owner_of_pop(ws, to_pop(this_slot));
 	auto relation = ve::apply(
 			[&ws](dcon::nation_id a, dcon::nation_id b) {
-				auto rel = ws.world.get_diplomatic_relation_by_diplomatic_pair(a, b);
-				return ws.world.diplomatic_relation_get_value(rel);
+				auto rel = ws.world.get_unilateral_relationship_by_unilateral_pair(a, b);
+				return ws.world.unilateral_relationship_get_opinion(rel);
 			},
 			to_nation(primary_slot), owner);
 	return compare_values(tval[0], relation, float(payload(tval[1]).signed_value));
@@ -5301,8 +5301,8 @@ TRIGGER_FUNCTION(tf_relation_this_pop) {
 TRIGGER_FUNCTION(tf_relation_from_nation) {
 	auto relation = ve::apply(
 			[&ws](dcon::nation_id a, dcon::nation_id b) {
-				auto rel = ws.world.get_diplomatic_relation_by_diplomatic_pair(a, b);
-				return ws.world.diplomatic_relation_get_value(rel);
+				auto rel = ws.world.get_unilateral_relationship_by_unilateral_pair(a, b);
+				return ws.world.unilateral_relationship_get_opinion(rel);
 			},
 			to_nation(primary_slot), to_nation(from_slot));
 	return compare_values(tval[0], relation, float(payload(tval[1]).signed_value));
@@ -5311,8 +5311,8 @@ TRIGGER_FUNCTION(tf_relation_from_province) {
 	auto owner = ws.world.province_get_nation_from_province_ownership(to_prov(from_slot));
 	auto relation = ve::apply(
 			[&ws](dcon::nation_id a, dcon::nation_id b) {
-				auto rel = ws.world.get_diplomatic_relation_by_diplomatic_pair(a, b);
-				return ws.world.diplomatic_relation_get_value(rel);
+				auto rel = ws.world.get_unilateral_relationship_by_unilateral_pair(a, b);
+				return ws.world.unilateral_relationship_get_opinion(rel);
 			},
 			to_nation(primary_slot), owner);
 	return compare_values(tval[0], relation, float(payload(tval[1]).signed_value));

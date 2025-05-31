@@ -4454,11 +4454,6 @@ relationship{
 	}
 
 	property{
-		name{ value }
-		type{ float }
-		tag{ save }
-	}
-	property{
 		name{ are_allied }
 		type{ bitfield }
 		tag{ save }
@@ -4493,6 +4488,12 @@ relationship{
 		name{unilateral_pair}
 		index{target}
 		index{source}
+	}
+
+	property{
+		name{ opinion }
+		type{ float }
+		tag{ save }
 	}
 
 	property{

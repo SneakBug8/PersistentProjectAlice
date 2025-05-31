@@ -744,6 +744,8 @@ war_score_3;From war goals: $x$
 war_score_4;From blockades: $x$
 dp_inf_tooltip_ban;Embassy banned until $x$
 dp_inf_tooltip_discredit;Discredited until $x$
+they_opinion;They owe us ?Y$x$?W opinion points
+we_opinion;We owe them ?Y$x$?W opinion points
 discredit_explain_1;You can't discredit yourself
 discredit_explain_2;The target's opinion of you is better than hostile
 discredit_explain_3;The great power is not banned

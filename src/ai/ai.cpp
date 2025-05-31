@@ -3026,10 +3026,11 @@ void sort_possible_justification_cbs(std::vector<possible_cb>& result, sys::stat
 		if(a_land < b_land)
 			return a_land;
 
-		auto rel_a = state.world.get_diplomatic_relation_by_diplomatic_pair(n, a.target);
-		auto rel_b = state.world.get_diplomatic_relation_by_diplomatic_pair(n, b.target);
-		if(state.world.diplomatic_relation_get_value(rel_a) != state.world.diplomatic_relation_get_value(rel_b))
-			return state.world.diplomatic_relation_get_value(rel_a) < state.world.diplomatic_relation_get_value(rel_b);
+		// Sort by how much they are indebted to us
+		auto rel_a = state.world.get_unilateral_relationship_by_unilateral_pair(n, a.target);
+		auto rel_b = state.world.get_unilateral_relationship_by_unilateral_pair(n, b.target);
+		if(state.world.unilateral_relationship_get_opinion(rel_a) != state.world.unilateral_relationship_get_opinion(rel_b))
+			return state.world.unilateral_relationship_get_opinion(rel_a) < state.world.unilateral_relationship_get_opinion(rel_b);
 
 		if(a.cb != b.cb)
 			return a.cb.index() < b.cb.index();
@@ -3379,10 +3380,11 @@ void sort_available_cbs(std::vector<possible_cb>& result, sys::state& state, dco
 		if(a_land < b_land)
 			return a_land;
 
-		auto rel_a = state.world.get_diplomatic_relation_by_diplomatic_pair(n, a.target);
-		auto rel_b = state.world.get_diplomatic_relation_by_diplomatic_pair(n, b.target);
-		if(state.world.diplomatic_relation_get_value(rel_a) != state.world.diplomatic_relation_get_value(rel_b))
-			return state.world.diplomatic_relation_get_value(rel_a) < state.world.diplomatic_relation_get_value(rel_b);
+		// Sort by how much they are indebted to us
+		auto rel_a = state.world.get_unilateral_relationship_by_unilateral_pair(n, a.target);
+		auto rel_b = state.world.get_unilateral_relationship_by_unilateral_pair(n, b.target);
+		if(state.world.unilateral_relationship_get_opinion(rel_a) != state.world.unilateral_relationship_get_opinion(rel_b))
+			return state.world.unilateral_relationship_get_opinion(rel_a) < state.world.unilateral_relationship_get_opinion(rel_b);
 
 		if(a.cb != b.cb)
 			return a.cb.index() < b.cb.index();
@@ -3432,10 +3434,11 @@ void sort_available_declaration_cbs(std::vector<possible_cb>& result, sys::state
 		if(a_land < b_land)
 			return a_land;
 
-		auto rel_a = state.world.get_diplomatic_relation_by_diplomatic_pair(n, a.target);
-		auto rel_b = state.world.get_diplomatic_relation_by_diplomatic_pair(n, b.target);
-		if(state.world.diplomatic_relation_get_value(rel_a) != state.world.diplomatic_relation_get_value(rel_b))
-			return state.world.diplomatic_relation_get_value(rel_a) < state.world.diplomatic_relation_get_value(rel_b);
+		// Sort by how much they are indebted to us
+		auto rel_a = state.world.get_unilateral_relationship_by_unilateral_pair(n, a.target);
+		auto rel_b = state.world.get_unilateral_relationship_by_unilateral_pair(n, b.target);
+		if(state.world.unilateral_relationship_get_opinion(rel_a) != state.world.unilateral_relationship_get_opinion(rel_b))
+			return state.world.unilateral_relationship_get_opinion(rel_a) < state.world.unilateral_relationship_get_opinion(rel_b);
 
 		if(a.cb != b.cb)
 			return a.cb.index() < b.cb.index();

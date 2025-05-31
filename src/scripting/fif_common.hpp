@@ -1075,8 +1075,8 @@ inline float f_relations(sys::state* state, int32_t t_index, int32_t n_index) {
 	dcon::nation_id n{ dcon::nation_id::value_base_t(n_index) };
 	dcon::nation_id t{ dcon::nation_id::value_base_t(t_index) };
 
-	auto rel = state->world.get_diplomatic_relation_by_diplomatic_pair(t, n);
-	return state->world.diplomatic_relation_get_value(rel);
+	auto rel = state->world.get_unilateral_relationship_by_unilateral_pair(t, n);
+	return state->world.unilateral_relationship_get_opinion(rel);
 }
 inline int32_t* f_relations_b(fif::state_stack& s, int32_t* p, fif::environment* e) {
 	if(fif::typechecking_mode(e->mode)) {

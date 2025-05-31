@@ -74,10 +74,10 @@ void sort_countries(sys::state& state, std::vector<dcon::nation_id>& list, count
 		break;
 	case country_list_sort::relation: {
 		auto f = [&](dcon::nation_id a, dcon::nation_id b) {
-			auto rid_a = state.world.get_diplomatic_relation_by_diplomatic_pair(state.local_player_nation, a);
-			auto va = bool(rid_a) ? state.world.diplomatic_relation_get_value(rid_a) : 0;
-			auto rid_b = state.world.get_diplomatic_relation_by_diplomatic_pair(state.local_player_nation, b);
-			auto vb = bool(rid_b) ? state.world.diplomatic_relation_get_value(rid_b) : 0;
+			auto rid_a = state.world.get_unilateral_relationship_by_unilateral_pair(a, state.local_player_nation);
+			auto va = bool(rid_a) ? state.world.unilateral_relationship_get_opinion(rid_a) : 0;
+			auto rid_b = state.world.get_unilateral_relationship_by_unilateral_pair(b, state.local_player_nation);
+			auto vb = bool(rid_b) ? state.world.unilateral_relationship_get_opinion(rid_b) : 0;
 			return va > vb;
 		};
 		std::stable_sort(list.begin(), list.end(), f);

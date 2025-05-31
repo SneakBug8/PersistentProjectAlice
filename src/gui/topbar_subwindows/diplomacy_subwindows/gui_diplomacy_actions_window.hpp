@@ -596,11 +596,12 @@ public:
 	}
 
 	bool is_available(sys::state& state, dcon::nation_id target) noexcept override {
-		return command::can_increase_relations(state, state.local_player_nation, target);
+		return false;
+			//command::can_increase_relations(state, state.local_player_nation, target);
 	}
 
 	void button_action(sys::state& state, dcon::nation_id target, ui::element_base* parent) noexcept override {
-		command::increase_relations(state, state.local_player_nation, target);
+		//command::increase_relations(state, state.local_player_nation, target);
 	}
 
 	void update_tooltip(sys::state& state, int32_t x, int32_t y, text::columnar_layout& contents, dcon::nation_id target) noexcept override {
@@ -613,8 +614,8 @@ public:
 
 		text::add_line_with_condition(state, contents, "increase_rel_explain_3", state.world.nation_get_diplomatic_points(state.local_player_nation) >= state.defines.increaserelation_diplomatic_cost, text::variable_type::x, int64_t(state.defines.increaserelation_diplomatic_cost));
 
-		auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(state.local_player_nation, target);
-		text::add_line_with_condition(state, contents, "increase_rel_explain_4", state.world.diplomatic_relation_get_value(rel) < 200.0f);
+		// auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(state.local_player_nation, target);
+		// text::add_line_with_condition(state, contents, "increase_rel_explain_4", state.world.diplomatic_relation_get_value(rel) < 200.0f);
 
 		text::add_line_with_condition(state, contents, "increase_rel_explain_5", !military::are_at_war(state, state.local_player_nation, target));
 	}
@@ -627,11 +628,12 @@ public:
 	}
 
 	bool is_available(sys::state& state, dcon::nation_id target) noexcept override {
-		return command::can_increase_relations(state, state.local_player_nation, target);
+		return false;
+		//command::can_increase_relations(state, state.local_player_nation, target);
 	}
 
 	void button_action(sys::state& state, dcon::nation_id target, ui::element_base* parent) noexcept override {
-		command::decrease_relations(state, state.local_player_nation, target);
+		//command::decrease_relations(state, state.local_player_nation, target);
 	}
 
 	void update_tooltip(sys::state& state, int32_t x, int32_t y, text::columnar_layout& contents, dcon::nation_id target) noexcept override {
@@ -644,8 +646,8 @@ public:
 
 		text::add_line_with_condition(state, contents, "decrease_rel_explain_3", state.world.nation_get_diplomatic_points(state.local_player_nation) >= state.defines.decreaserelation_diplomatic_cost, text::variable_type::x, int64_t(state.defines.decreaserelation_diplomatic_cost));
 
-		auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(state.local_player_nation, target);
-		text::add_line_with_condition(state, contents, "decrease_rel_explain_4", state.world.diplomatic_relation_get_value(rel) > -200.0f);
+		//auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(state.local_player_nation, target);
+		//text::add_line_with_condition(state, contents, "decrease_rel_explain_4", state.world.diplomatic_relation_get_value(rel) > -200.0f);
 
 		text::add_line_with_condition(state, contents, "decrease_rel_explain_5", !military::are_at_war(state, state.local_player_nation, target));
 

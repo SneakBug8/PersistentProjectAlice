@@ -275,12 +275,15 @@ bool can_give_war_subsidies(sys::state& state, dcon::nation_id source, dcon::nat
 	return true;
 }
 void execute_give_war_subsidies(sys::state& state, dcon::nation_id source, dcon::nation_id target) {
-	nations::adjust_relationship(state, source, target, state.defines.warsubsidy_relation_on_accept);
 	state.world.nation_get_diplomatic_points(source) -= state.defines.warsubsidy_diplomatic_cost;
+
+	// Their relations towards us are increased
+	nations::adjust_relationship(state, target, source, state.defines.warsubsidy_relation_on_accept);
+
+	// We start paying them reparations
 	auto rel = state.world.get_unilateral_relationship_by_unilateral_pair(target, source);
 	if(!rel)
 		rel = state.world.force_create_unilateral_relationship(target, source);
-
 	state.world.unilateral_relationship_set_war_subsidies(rel, true);
 
 	notification::post(state, notification::message{
@@ -347,7 +350,8 @@ void increase_relations(sys::state& state, dcon::nation_id source, dcon::nation_
 bool can_increase_relations(sys::state& state, dcon::nation_id source, dcon::nation_id target) {
 	/* Can only perform if, the nations are not at war, the relation value isn't maxed out at 200, and has
 	 * defines:INCREASERELATION_DIPLOMATIC_COST diplomatic points. And the target can't be the same as the sender. */
-
+	return false;
+	/*
 	if(source == target)
 		return false; // Can't negotiate with self
 
@@ -361,6 +365,7 @@ bool can_increase_relations(sys::state& state, dcon::nation_id source, dcon::nat
 	if(state.world.nation_get_is_player_controlled(source))
 		return state.world.nation_get_diplomatic_points(source) >= state.defines.increaserelation_diplomatic_cost; // Enough diplomatic points
 	return true;
+	*/
 }
 void execute_increase_relations(sys::state& state, dcon::nation_id source, dcon::nation_id target) {
 	nations::adjust_relationship(state, source, target, state.defines.increaserelation_relation_on_accept);
@@ -385,9 +390,10 @@ void decrease_relations(sys::state& state, dcon::nation_id source, dcon::nation_
 	add_to_command_queue(state, p);
 }
 bool can_decrease_relations(sys::state& state, dcon::nation_id source, dcon::nation_id target) {
+	return false;
 	/* Can only perform if, the nations are not at war, the relation value isn't maxxed out at -200, and has
 	 * defines:DECREASERELATION_DIPLOMATIC_COST diplomatic points. And not done to self. */
-	if(source == target)
+	/*if(source == target)
 		return false; // Can't negotiate with self
 	if(military::are_at_war(state, source, target))
 		return false; // Can't be at war
@@ -396,7 +402,7 @@ bool can_decrease_relations(sys::state& state, dcon::nation_id source, dcon::nat
 		return false; // Maxxed out
 	if(state.world.nation_get_is_player_controlled(source))
 		return state.world.nation_get_diplomatic_points(source) >= state.defines.decreaserelation_diplomatic_cost; // Enough diplomatic points
-	return true;
+	return true;*/
 }
 void execute_decrease_relations(sys::state& state, dcon::nation_id source, dcon::nation_id target) {
 	nations::adjust_relationship(state, source, target, state.defines.decreaserelation_relation_on_accept);
@@ -1834,8 +1840,9 @@ bool can_intervene_in_war(sys::state& state, dcon::nation_id source, dcon::war_i
 			return false;
 
 		auto primary_on_side = for_attacker ? state.world.war_get_primary_attacker(w) : state.world.war_get_primary_defender(w);
-		auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(primary_on_side, source);
-		if(state.world.diplomatic_relation_get_value(rel) < state.defines.gw_intervene_min_relations)
+		// How much they are indebted to us
+		auto rel = state.world.get_unilateral_relationship_by_unilateral_pair(source, primary_on_side);
+		if(state.world.unilateral_relationship_get_opinion(rel) < state.defines.gw_intervene_min_relations)
 			return false;
 
 		for(auto p : state.world.war_get_war_participant(w)) {
@@ -2428,6 +2435,7 @@ void give_military_access(sys::state& state, dcon::nation_id asker, dcon::nation
 	add_to_command_queue(state, p);
 }
 bool can_give_military_access(sys::state& state, dcon::nation_id asker, dcon::nation_id target, bool ignore_cost) {
+	// ASKER gives access to the TARGET
 	if(asker == target)
 		return false;
 
@@ -2438,12 +2446,21 @@ bool can_give_military_access(sys::state& state, dcon::nation_id asker, dcon::na
 	if(state.world.unilateral_relationship_get_military_access(rel))
 		return false;
 
+	// ASKER has to be indebted to the TARGET
+	if(state.world.unilateral_relationship_get_opinion(rel) < state.defines.givemilaccess_relation_on_accept) {
+		return false;
+	}
+
 	if(military::are_at_war(state, asker, target))
 		return false;
 
 	return true;
 }
 void execute_give_military_access(sys::state& state, dcon::nation_id asker, dcon::nation_id target) {
+	// ASKER gives access to the TARGET
+	// ASKER becomes indebted to the TARGET
+	// Providing military access is a way to reduce your indebtedness to other countries, but not to gain opinion points from unwanted stuff
+
 	state.world.nation_get_diplomatic_points(asker) -= state.defines.givemilaccess_diplomatic_cost;
 
 	auto urel = state.world.get_unilateral_relationship_by_unilateral_pair(asker, target);
@@ -2451,7 +2468,7 @@ void execute_give_military_access(sys::state& state, dcon::nation_id asker, dcon
 		urel = state.world.force_create_unilateral_relationship(asker, target);
 	}
 	state.world.unilateral_relationship_set_military_access(urel, true);
-	nations::adjust_relationship(state, asker, target, state.defines.givemilaccess_relation_on_accept);
+	nations::adjust_relationship(state, asker, target, -state.defines.givemilaccess_relation_on_accept);
 }
 
 void ask_for_alliance(sys::state& state, dcon::nation_id asker, dcon::nation_id target) {

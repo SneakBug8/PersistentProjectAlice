@@ -2404,14 +2404,7 @@ void oob_relationship::value(association_type, int32_t v, error_handler& err, in
 		v = std::clamp(v, -200, 200);
 	}
 
-	auto rel =
-			context.outer_context.state.world.get_diplomatic_relation_by_diplomatic_pair(context.nation_for, context.nation_with);
-	if(rel) {
-		context.outer_context.state.world.diplomatic_relation_set_value(rel, float(v));
-	} else if(v != 0) {
-		auto new_rel = context.outer_context.state.world.force_create_diplomatic_relation(context.nation_for, context.nation_with);
-		context.outer_context.state.world.diplomatic_relation_set_value(new_rel, float(v));
-	}
+	nations::adjust_relationship(context.outer_context.state, context.nation_for, context.nation_with, (float) v);
 }
 
 void oob_relationship::level(association_type, int32_t v, error_handler& err, int32_t line, oob_file_relation_context& context) {

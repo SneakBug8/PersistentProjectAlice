@@ -1692,13 +1692,13 @@ void get_active_political_parties(sys::state& state, dcon::nation_id n, std::vec
 	}
 }
 
-void monthly_adjust_relationship(sys::state& state, dcon::nation_id a, dcon::nation_id b, float delta) {
-	auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(a, b);
+void monthly_adjust_relationship(sys::state& state, dcon::nation_id from, dcon::nation_id to, float delta) {
+	auto rel = state.world.get_unilateral_relationship_by_unilateral_pair(to, from);
 	if(!rel) {
-		rel = state.world.force_create_diplomatic_relation(a, b);
+		rel = state.world.force_create_unilateral_relationship(to, from);
 	}
-	auto& val = state.world.diplomatic_relation_get_value(rel);
-	val = std::clamp(val + delta, -200.0f, std::max(val, 100.0f));
+	auto& val = state.world.unilateral_relationship_get_opinion(rel);
+	val = std::clamp(val + delta, -300.f, std::max(val, 100.f));
 }
 
 void update_revanchism(sys::state& state) {
@@ -1800,28 +1800,45 @@ void update_monthly_points(sys::state& state) {
 	- Once relations are at 100, monthly increases cannot take them higher
 	*/
 	for(auto so : state.world.in_overlord) {
-		monthly_adjust_relationship(state, so.get_ruler(), so.get_subject(), 0.25f);
+		// Subjects get less favors from rulers than rulers from subjects.
+		monthly_adjust_relationship(state, so.get_ruler(), so.get_subject(), 0.1f);
+		monthly_adjust_relationship(state, so.get_subject(), so.get_ruler(), 0.2f);
 	}
 	for(auto an : state.world.in_nation_adjacency) {
 		if(an.get_connected_nations(0).get_is_at_war() == false && an.get_connected_nations(1).get_is_at_war() == false)
-			monthly_adjust_relationship(state, an.get_connected_nations(0), an.get_connected_nations(1), 0.05f);
+			// Adjust relations both ways
+			monthly_adjust_relationship(state, an.get_connected_nations(0), an.get_connected_nations(1), 0.03f);
+			monthly_adjust_relationship(state, an.get_connected_nations(1), an.get_connected_nations(0), 0.03f);
+
+		// if we can attack them - they become less indebted to us
 		if(military::can_use_cb_against(state, an.get_connected_nations(0), an.get_connected_nations(1))) {
-			monthly_adjust_relationship(state, an.get_connected_nations(0), an.get_connected_nations(1), -0.15f);
+			monthly_adjust_relationship(state, an.get_connected_nations(1), an.get_connected_nations(0), -0.05f);
 		}
 		if(military::can_use_cb_against(state, an.get_connected_nations(1), an.get_connected_nations(0))) {
-			monthly_adjust_relationship(state, an.get_connected_nations(0), an.get_connected_nations(1), -0.15f);
+			monthly_adjust_relationship(state, an.get_connected_nations(0), an.get_connected_nations(1), -0.05f);
 		}
 	}
 	for(auto i : state.world.in_unilateral_relationship) {
 		if(i.get_military_access()) {
-			monthly_adjust_relationship(state, i.get_source(), i.get_target(), 0.025f);
+			// Military access makes giver less indebted to the recipient
+			// SOURCE gives access to the TARGET
+			// SOURCE is less indebted to the TARGET
+			monthly_adjust_relationship(state, i.get_source(), i.get_target(), -0.025f);
+		}
+		if(i.get_war_subsidies()) {
+			// War subsidies make the recipient more indebted to the giver
+			// SOURCE pays to the TARGET
+			// TARGET is indebted to the SOURCE
+			monthly_adjust_relationship(state, i.get_target(), i.get_source(), 0.025f);
 		}
 	}
 	for(auto w : state.world.in_war) {
 		for(auto n : w.get_war_participant()) {
 			for(auto m : w.get_war_participant()) {
 				if(n.get_is_attacker() != m.get_is_attacker()) {
-					monthly_adjust_relationship(state, n.get_nation(), m.get_nation(), -0.005f);
+					// War decreases mutual indebtedness
+					monthly_adjust_relationship(state, n.get_nation(), m.get_nation(), -0.2f);
+					monthly_adjust_relationship(state, m.get_nation(), n.get_nation(), -0.2f);
 				}
 			}
 		}
@@ -1885,16 +1902,16 @@ bool is_committed_in_crisis(sys::state const& state, dcon::nation_id n) {
 	return false;
 }
 
-void adjust_relationship(sys::state& state, dcon::nation_id a, dcon::nation_id b, float delta) {
-	if(state.world.nation_get_owned_province_count(a) == 0 || state.world.nation_get_owned_province_count(a) == 0)
+void adjust_relationship(sys::state& state, dcon::nation_id from, dcon::nation_id to, float delta) {
+	if(state.world.nation_get_owned_province_count(from) == 0 || state.world.nation_get_owned_province_count(to) == 0)
 		return;
 
-	auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(a, b);
+	auto rel = state.world.get_unilateral_relationship_by_unilateral_pair(to, from);
 	if(!rel) {
-		rel = state.world.force_create_diplomatic_relation(a, b);
+		rel = state.world.force_create_unilateral_relationship(to, from);
 	}
-	auto& val = state.world.diplomatic_relation_get_value(rel);
-	val = std::clamp(val + delta, -200.0f, 200.0f);
+	auto& val = state.world.unilateral_relationship_get_opinion(rel);
+	val = std::clamp(val + delta, -300.f, 300.f);
 }
 
 void create_nation_based_on_template(sys::state& state, dcon::nation_id n, dcon::nation_id base) {
@@ -2415,7 +2432,8 @@ void update_influence(sys::state& state) {
 					float puppet_factor = rel.get_influence_target().get_overlord_as_subject().get_ruler() == n
 																		? state.defines.puppet_bonus_influence_percent
 																		: 0.0f;
-					float relationship_factor = state.world.diplomatic_relation_get_value(state.world.get_diplomatic_relation_by_diplomatic_pair(n, rel.get_influence_target())) / state.defines.relation_influence_modifier;
+					float relationship_factor = 0.0f;
+					// state.world.diplomatic_relation_get_value(state.world.get_diplomatic_relation_by_diplomatic_pair(n, rel.get_influence_target())) / state.defines.relation_influence_modifier;
 
 					float investment_factor = total_fi > 0.0f ? state.defines.investment_influence_defense * gp_invest / total_fi : 0.0f;
 					float pop_factor =

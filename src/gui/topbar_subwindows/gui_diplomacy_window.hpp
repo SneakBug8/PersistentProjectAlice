@@ -534,8 +534,8 @@ void explain_influence(sys::state& state, dcon::nation_id target, text::columnar
 			fatten(state.world, state.world.nation_get_overlord_as_subject(target)).get_ruler() == n
 			? state.defines.puppet_bonus_influence_percent
 			: 0.0f;
-		float relationship_factor =
-			state.world.diplomatic_relation_get_value(state.world.get_diplomatic_relation_by_diplomatic_pair(n, target)) / state.defines.relation_influence_modifier;
+		float relationship_factor = 0.f;
+		//	state.world.diplomatic_relation_get_value(state.world.get_diplomatic_relation_by_diplomatic_pair(n, target)) / state.defines.relation_influence_modifier;
 
 		float investment_factor =
 			total_fi > 0.0f
@@ -1684,9 +1684,9 @@ public:
 				text::add_line_with_condition(state, contents, "intervene_12", state.world.nation_get_war_exhaustion(state.local_player_nation) < state.defines.gw_intervene_max_exhaustion, text::variable_type::x, int64_t(state.defines.gw_intervene_max_exhaustion));
 
 				auto primary_on_side = B ? state.world.war_get_primary_attacker(w) : state.world.war_get_primary_defender(w);
-				auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(primary_on_side, state.local_player_nation);
+				auto rel = state.world.get_unilateral_relationship_by_unilateral_pair(primary_on_side, state.local_player_nation);
 
-				text::add_line_with_condition(state, contents, "intervene_13", state.world.diplomatic_relation_get_value(rel) >= state.defines.gw_intervene_min_relations, text::variable_type::x, int64_t(state.defines.gw_intervene_min_relations));
+				text::add_line_with_condition(state, contents, "intervene_13", state.world.unilateral_relationship_get_opinion(rel) >= state.defines.gw_intervene_min_relations, text::variable_type::x, int64_t(state.defines.gw_intervene_min_relations));
 
 				bool any_in_sphere = false;
 				bool any_allied = false;
@@ -2242,8 +2242,8 @@ inline static diplomacy_action_ally_button diplomacy_action_ally_button_s;
 inline static diplomacy_action_call_ally_button diplomacy_action_call_ally_button_s;
 inline static diplomacy_action_military_access_button diplomacy_action_military_access_button_s;
 inline static diplomacy_action_give_military_access_button diplomacy_action_give_military_access_button_s;
-inline static diplomacy_action_increase_relations_button diplomacy_action_increase_relations_button_s;
-inline static diplomacy_action_decrease_relations_button diplomacy_action_decrease_relations_button_s;
+// inline static diplomacy_action_increase_relations_button diplomacy_action_increase_relations_button_s;
+// inline static diplomacy_action_decrease_relations_button diplomacy_action_decrease_relations_button_s;
 inline static diplomacy_action_war_subisides_button diplomacy_action_war_subisides_button_s;
 inline static diplomacy_action_declare_war_button diplomacy_action_declare_war_button_s;
 inline static diplomacy_action_release_subject_button diplomacy_action_release_subject_button_s;
@@ -2265,8 +2265,8 @@ inline static diplomacy_action_btn_logic* leftcolumnlogics[DiplomaticActionsRows
 	&diplomacy_action_call_ally_button_s,
 	&diplomacy_action_military_access_button_s,
 	&diplomacy_action_give_military_access_button_s,
-	&diplomacy_action_increase_relations_button_s,
-	&diplomacy_action_decrease_relations_button_s,
+//	&diplomacy_action_increase_relations_button_s,
+//	&diplomacy_action_decrease_relations_button_s,
 	&diplomacy_action_war_subisides_button_s,
 	&diplomacy_action_declare_war_button_s,
 	&diplomacy_action_release_subject_button_s,
@@ -2276,8 +2276,8 @@ inline static diplomacy_action_btn_logic* rightcolumnlogics[DiplomaticActionsRow
 	&diplomacy_action_discredit_button_s,
 	&diplomacy_action_expel_advisors_button_s,
 	&diplomacy_action_ban_embassy_button_s,
-	&diplomacy_action_increase_opinion_button_s,
-	&diplomacy_action_decrease_opinion_button_s,
+//	&diplomacy_action_increase_opinion_button_s,
+//	&diplomacy_action_decrease_opinion_button_s,
 	&diplomacy_action_add_to_sphere_button_s,
 	&diplomacy_action_remove_from_sphere_button_s,
 	&diplomacy_action_justify_war_button_s,

@@ -849,21 +849,21 @@ void relation_map_tt_box(sys::state& state, text::columnar_layout& contents, dco
 		if(dcon::fatten(state.world, state.map_state.selected_province).is_valid()
 		&& dcon::fatten(state.world, state.map_state.selected_province).get_nation_from_province_ownership() != fat.get_nation_from_province_ownership()) {
 			text::substitution_map sub;
-			auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(fat.get_nation_from_province_ownership().id, dcon::fatten(state.world, state.map_state.selected_province).get_nation_from_province_ownership());
+			auto rel = state.world.get_unilateral_relationship_by_unilateral_pair(fat.get_nation_from_province_ownership().id, dcon::fatten(state.world, state.map_state.selected_province).get_nation_from_province_ownership());
 			auto fat_rel = dcon::fatten(state.world, rel);
 			text::add_to_substitution_map(sub, text::variable_type::country1, dcon::fatten(state.world, state.map_state.selected_province).get_nation_from_province_ownership().id);
 			text::add_to_substitution_map(sub, text::variable_type::country2, fat.get_nation_from_province_ownership().id);
-			text::add_to_substitution_map(sub, text::variable_type::relation, int32_t(fat_rel.get_value()));
+			text::add_to_substitution_map(sub, text::variable_type::relation, int32_t(fat_rel.get_opinion()));
 			text::localised_format_box(state, contents, box, std::string_view("relation_between"), sub);
 
 		} else if(!dcon::fatten(state.world, state.map_state.selected_province).is_valid()
 			&& dcon::fatten(state.world, state.local_player_nation) != fat.get_nation_from_province_ownership()) {
 			text::substitution_map sub;
-			auto rel = state.world.get_diplomatic_relation_by_diplomatic_pair(fat.get_nation_from_province_ownership().id, state.local_player_nation);
+			auto rel = state.world.get_unilateral_relationship_by_unilateral_pair(fat.get_nation_from_province_ownership().id, state.local_player_nation);
 			auto fat_rel = dcon::fatten(state.world, rel);
 			text::add_to_substitution_map(sub, text::variable_type::country1, state.local_player_nation);
 			text::add_to_substitution_map(sub, text::variable_type::country2, fat.get_nation_from_province_ownership().id);
-			text::add_to_substitution_map(sub, text::variable_type::relation, int32_t(fat_rel.get_value()));
+			text::add_to_substitution_map(sub, text::variable_type::relation, int32_t(fat_rel.get_opinion()));
 			text::localised_format_box(state, contents, box, std::string_view("relation_between"), sub);
 		}
 
