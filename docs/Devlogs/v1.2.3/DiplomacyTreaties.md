@@ -10,3 +10,17 @@ The changes are as following:
 - Influence is integrated into the opinion: investing influence points makes the other party indebted to you (higher opinion) representing the scare of might and industry of GPs. Then GPs buy the usual sphering actions with that opinion.
 
 To make this system controllable by the player in spots like intervening in wars we say that the other party should be indebted to the player for the player to intervene.
+
+
+---
+
+get_unilateral_relationship_by_unilateral_pair
+unilateral_relationship_get_opinion
+
+asker gives military access to the target
+relationship is between (asker, target)
+opinion is between (target, asker)
+
+source sends subsidies to target
+relationship (target, source)
+relations go between (source, target)
