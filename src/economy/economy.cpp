@@ -4,6 +4,7 @@
 #include "economy_stats.hpp"
 #include "economy_production.hpp"
 #include "construction.hpp"
+#include "urbanization.hpp"
 #include "demographics.hpp"
 #include "dcon_generated.hpp"
 #include "ai_economy.hpp"
@@ -3029,6 +3030,8 @@ void daily_update(sys::state& state, bool presimulation, float presimulation_sta
 
 		uint32_t total_commodities = state.world.commodity_size();
 
+		auto markets_urbanization = state.world.market_get_urbanization(markets);
+
 		// poor strata update
 
 		{
@@ -3054,6 +3057,7 @@ void daily_update(sys::state& state, bool presimulation, float presimulation_sta
 
 				auto available = state.world.commodity_get_is_available_from_start(c);
 				auto is_active = state.world.nation_get_unlocked_commodities(nations, c);
+				auto is_urban_commodity = state.world.commodity_get_is_urban(c);
 				auto life_weights = state.world.market_get_life_needs_weights(markets, c);
 				auto everyday_weights = state.world.market_get_everyday_needs_weights(markets, c);
 				auto luxury_weights = state.world.market_get_luxury_needs_weights(markets, c);
@@ -3067,9 +3071,16 @@ void daily_update(sys::state& state, bool presimulation, float presimulation_sta
 					auto everyday_base = state.world.pop_type_get_everyday_needs(pop_type, c);
 					auto luxury_base = state.world.pop_type_get_luxury_needs(pop_type, c);
 
+					// Demand of urban goods scales proportionally to urbanization of the market
 					auto life_costs = prices * life_base * life_needs_mult * life_weights;
 					auto everyday_costs = prices * everyday_base * everyday_needs_mult * everyday_weights * invention_factor;
 					auto luxury_costs = prices * luxury_base * luxury_needs_mult * luxury_weights * invention_factor;
+
+					if(is_urban_commodity) {
+						life_costs = life_costs * markets_urbanization;
+						everyday_costs = everyday_costs * markets_urbanization;
+						luxury_costs = luxury_costs * markets_urbanization;
+					}
 
 					state.world.market_set_life_needs_costs(
 						markets,

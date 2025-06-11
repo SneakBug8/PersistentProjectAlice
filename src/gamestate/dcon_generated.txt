@@ -365,6 +365,11 @@ object {
 		tag{ scenario }
 	}
 	property{
+		name{ is_urban }
+		type{ bitfield }
+		tag{ scenario }
+	}
+	property{
 		name{ money_rgo }
 		type{ bitfield }
 		tag{ scenario }
@@ -4338,6 +4343,11 @@ object{
 	tag{ save }
 	property {
 		name{ gdp }
+		type{ float }
+		tag{ save }
+	}
+	property {
+		name{ urbanization }
 		type{ float }
 		tag{ save }
 	}
