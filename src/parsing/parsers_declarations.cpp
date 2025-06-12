@@ -107,6 +107,9 @@ void good::is_local(association_type, bool b, error_handler& err, int32_t line, 
 }
 
 void good::is_urban(association_type, bool b, error_handler& err, int32_t line, good_context& context) {
+	context.outer_context.state.world.commodity_set_is_urban(context.id, b);
+}
+
 void good::overseas_penalty(association_type, bool b, error_handler& err, int32_t line, good_context& context) {
 	context.outer_context.state.world.commodity_set_overseas_penalty(context.id, b);
 }
