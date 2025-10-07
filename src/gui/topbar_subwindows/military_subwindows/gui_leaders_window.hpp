@@ -6,8 +6,11 @@
 
 namespace ui {
 
+// Stateless image element to display leader portrait (general portrait, admiral portrait) of local_player_nation
+// Leader is retrieved
 class leader_portrait : public image_element_base {
 	void on_update(sys::state& state) noexcept override {
+		// Since the random number returns the same index here, we are safe to display the leader portrait right here
 		auto pculture = state.world.nation_get_primary_culture(state.local_player_nation);
 		auto ltype = pculture.get_group_from_culture_group_membership().get_leader();
 		if(ltype) {
@@ -30,6 +33,10 @@ class leader_portrait : public image_element_base {
 			}
 		}
 		
+	}
+
+	void render(sys::state& state, int32_t x, int32_t y) noexcept override {
+		image_element_base::render(state, x, y);
 	}
 
 	tooltip_behavior has_tooltip(sys::state& state) noexcept override {

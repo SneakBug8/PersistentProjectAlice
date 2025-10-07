@@ -34,6 +34,7 @@ struct building_gfx_context {
 	sys::state& full_state;
 	ui::definitions& ui_defs;
 	std::vector<simple_fs::file> gui_files;
+	// Links filenames to GFX IDs during scenario generation
 	ankerl::unordered_dense::map<std::string, dcon::gfx_object_id> map_of_names;
 	ankerl::unordered_dense::map<std::string, dcon::texture_id> map_of_texture_names;
 	std::vector<pending_button_script> province_buttons_allow;

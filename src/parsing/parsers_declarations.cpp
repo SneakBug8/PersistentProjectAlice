@@ -3042,6 +3042,7 @@ void generic_event::picture(association_type, std::string_view name, error_handl
 	auto pictures = open_directory(gfx, NATIVE("pictures"));
 	auto events = open_directory(pictures, NATIVE("events"));
 
+	// Weird quirk on format types for compliance with V2 behavior (it oftentimes ignores file extensions. PA does try both dds and png files for every texture anyway.
 	std::string file_name = simple_fs::remove_double_backslashes(std::string("gfx\\pictures\\events\\") + [&]() {
 		if(peek_file(events, simple_fs::utf8_to_native(name) + NATIVE(".tga"))) {
 			return std::string(name) + ".tga";
@@ -3112,13 +3113,21 @@ void make_leader_images(scenario_building_context& outer_context) {
 	auto infa = open_directory(gfx, NATIVE("interface"));
 	auto leaders = open_directory(infa, NATIVE("leaders"));
 
-	auto all_images = simple_fs::list_files(leaders, NATIVE(".dds"));
+	//auto all_images = simple_fs::list_files(leaders, NATIVE(".dds"));
+	auto all_images = simple_fs::list_files(leaders, NATIVE(".png"));
+	// all_images.insert(all_images.end(), png_images.begin(), png_images.end());
+
 	for(auto i : all_images) {
 		auto native_name = simple_fs::get_file_name(i);
 		auto uname = simple_fs::native_to_utf8(native_name);
 
 		bool admiral = false;
 		std::string group_name;
+
+		//auto pngpos = uname.find(".png", 0);
+		//if(pngpos != std::string::npos) {
+		//	uname = uname.substr(0, pngpos) + ".tga";
+		//}
 
 		auto apos = uname.find("_admiral_", 0);
 		if(apos != std::string::npos) {
@@ -3157,6 +3166,8 @@ void make_leader_images(scenario_building_context& outer_context) {
 			auto index = outer_context.state.ui_defs.textures.size();
 			outer_context.state.ui_defs.textures.emplace_back(outer_context.state.add_key_utf8(file_name));
 			new_obj.primary_texture_handle = dcon::texture_id(uint16_t(index));
+			// outer_context.state.ui_defs.textures.emplace_back(outer_context.state.add_key_win1252(file_name));
+			// new_obj.primary_texture_handle = dcon::texture_id(dcon::texture_id::value_base_t(index));
 			outer_context.gfx_context.map_of_texture_names.insert_or_assign(file_name, new_obj.primary_texture_handle);
 		}
 		new_obj.flags |= uint8_t(ui::object_type::generic_sprite);
